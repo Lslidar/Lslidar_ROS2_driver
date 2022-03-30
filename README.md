@@ -32,7 +32,40 @@ _**Operation Instructions:** To access the operation intructions, please click o
 
 _**Clone:** To clone each Lidar's repository, please copy and paste the corresponding code in the terminal_
 
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/C16.png" width="50px" />C16_v2.6 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/C16_v2.6)
+Linux/Mac: `git clone -b C16_v2.6 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
+Windows: `git clone --branch C16_v2.6 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/C16.png" width="50px" />C16_v3.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/C16_v3.0)
+Linux/Mac: `git clone -b C16_v3.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+Windows: `git clone --branch C16_v3.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/C32.png" width="50px" />C32_v3.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/C32_v3.0)
+Linux/Mac: `git clone -b C32_v3.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+Windows: `git clone --branch C32_v3.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/CH128X1.png" width="50px" />CH128x1_v1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/CH128x1_v1.0)
+Linux/Mac: `git clone -b CH128x1_v1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+Windows: `git clone --branch CH128x1_v1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/LS01B.png" width="50px" />Ls01b_v1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/LS01B_v1.0)
+Linux/Mac: `git clone -b LS01B_v1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+Windows: `git clone --branch LS01B_v1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/M10.png" width="50px" />M10_v1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/M10_v1.0)
+Linux/Mac: `git clone -b M10_v1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+Windows: `git clone --branch M10_v1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/N301%20N401.png" width="50px" />N301-V3.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/N301_v3.0)
+Linux/Mac: `git clone -b N301_v3.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+Windows: `git clone --branch N301_v3.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
 FAQ
 ----
