@@ -1,0 +1,22 @@
+/ch128x1_right/lslidar_driver_node:
+  ros__parameters:
+    device_ip: 192.168.1.200
+    lidar_type: ch128x1                 # 雷达类型  ch16x1/ch64w/ch128x1/ch128s1
+    msop_port: 2368
+    difop_port: 2369
+    pcl_type: false
+    add_multicast: false
+    group_ip: 224.1.1.2
+    frame_id: laser_link
+    min_range: 0.15
+    max_range: 200.0
+    packet_rate: 6737.0
+    angle_disable_min: 0.0
+    angle_disable_max: 0.0
+    topic_name: lslidar_point_cloud
+    horizontal_angle_resolution: 0.2     #10Hz:0.2  20Hz:0.4 5Hz: 0.1
+    use_time_service: false              #是否使用GPS/ptp/ntp授时
+    echo_num: 0                          #仅双回波模式下有效，0表示发布所有点云，1表示发布第一次回波点云，2表示发布第二次回波点云
+    publish_scan: false
+    channel_num: 8
+    #pcap: /home/ls/work/fuhong/data/ch128x1.pcap                        #pcap包路径，加载pcap包时打开此注释
