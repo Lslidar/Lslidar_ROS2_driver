@@ -1,0 +1,25 @@
+/lidar_1/lslidar_driver_node:
+  ros__parameters: 
+    frame_id: laser_link                                    #激光坐标
+    group_ip: 224.1.1.2
+    add_multicast: false 
+    device_ip: 192.168.1.200                                #雷达源ip
+    device_ip_difop: 192.168.1.102                          #雷达目的IP
+    msop_port: 2368                                         #雷达目的端口号
+    difop_port: 2369                                        #雷达源端口号
+    lidar_name: M10                                         #雷达选择:M10 M10_P M10_PLUS M10_GPS N10 L10
+    angle_disable_min: 0.0                                  #角度裁剪开始值
+    angle_disable_max: 90.0                                 #角度裁剪结束值
+    min_range: 0.0                                          #雷达接收距离最小值
+    max_range: 200.0                                        #雷达接收距离最大值
+    use_gps_ts: false                                       #雷达是否使用GPS授时
+    scan_topic: /scan                                       #设置激光数据topic名称
+    interface_selection: serial                             #接口选择:net 为网口,serial 为串口。
+    serial_port_: /dev/ttyUSB0                              #串口连接时的串口号
+    high_reflection: false                                  #M10_P雷达需填写该值,若不确定，请联系技术支持。
+    compensation: true				                              #M10系列是否使用角度补偿功能
+    pubScan: true                                           #是否发布scan话题
+    pubPointCloud2: true                                    #是否发布pointcloud2话题
+    pointcloud_topic: /lslidar_point_cloud                  #设置激光数据topic名称
+#    pcap: /home/ls/work/2211/M10_P_gps.pcap                 #雷达是否使用pcap包读取功能
+#    in_file_name: /home/ls/1.txt                           #雷达是否使用txt文件读取功能
