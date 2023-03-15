@@ -1,0 +1,25 @@
+/c32_left/lslidar_driver_node:
+  ros__parameters:
+    packet_rate: 1695.0
+    device_ip: 192.168.1.200
+    msop_port: 2368
+    difop_port: 2369
+    pcl_type: false
+    lidar_type: c32                 # 雷达类型  c1/c8/c16/c32
+    c32_type: c32_32                # c32_32: 垂直角度是的30度c32   c32_70: 垂直角度是的70度c32  c32_90: 垂直角度是的90度c32
+    add_multicast: false
+    group_ip: 224.1.1.2
+    use_gps_ts: false
+    min_range: 0.3
+    max_range: 200.0
+    frame_id: laser_link
+    distance_unit: 0.4
+    angle_disable_min: 0
+    angle_disable_max: 0
+    horizontal_angle_resolution: 0.18     #10Hz:0.18  20Hz:0.36 5Hz: 0.09
+    scan_num: 15
+    read_once: false
+    publish_scan: false
+    topic_name: lslidar_point_cloud
+    coordinate_opt: false
+    #pcap: /home/ls/work/fuhong/data/V4.0/c32w.pcap                        #pcap包路径，加载pcap包时打开此注释
