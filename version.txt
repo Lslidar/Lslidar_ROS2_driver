@@ -1,0 +1,14 @@
+# Version Updates
+
+/***************************************************************
+Initial version: LSLIDAR_N301_V2.1.0_230104_ROS2
+Updates: 
+	1.Support point cloud generation via N301's Ethernet port data transmission
+    	2.Support point cloud angle clipping and distance filtering
+    	3. Support input "scan" or "pointcloud2" topic
+    	4. Support reading pcap file
+    	5. Support RO2 humble
+	
+Update date: 2023-01-04
+***************************************************************/
+
