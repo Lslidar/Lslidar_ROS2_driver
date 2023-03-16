@@ -1,7 +1,7 @@
 # LSLIDAR_CHX1_V1.0.0_221116_ROS2
 
 ## 1.Introduction
-​		LSLIDAR_CHX1_V1.0.0_221116_ROS2 is the lidar ros driver in linux environment, which is suitable for ch16x1/ch64w/ch128x1/ch128s1lidar. The program has  tested under ubuntu18.04 ros dashing , ubuntu18.04 ros eloquent,ubuntu 20.04 ros foxy , ubuntu 20.04 ros galactic and ubuntu22.04 ros humble.
+​		LSLIDAR_CHX1_V1.0.0_221116_ROS2 is the lidar ros driver in linux environment, which is suitable for ch16x1/ch64w/ch128x1/ch128s1/cx128s2 lidar. The program has  tested under ubuntu18.04 ros dashing , ubuntu18.04 ros eloquent,ubuntu 20.04 ros foxy , ubuntu 20.04 ros galactic and ubuntu22.04 ros humble.
 
 ## 2.Dependencies
 
@@ -127,8 +127,8 @@ The content of the lslidar_c32.yaml file is as follows, and the meaning of each 
     min_range: 0.3                  #Unit: m. The minimum value of the lidar blind area, points smaller than this value are filtered
     max_range: 200.0                #Unit: m. The maximum value of the lidar blind area, points smaller than this value are filtered
     packet_rate: 1409.0             #Number of packets played per second when playing pcap
-    angle_disable_min: 0                    #lidar clipping angle start value ，range [0,180]
-    angle_disable_max: 0                    #lidar clipping angle end value ，range [0,180]
+    angle_disable_min: 0                    #lidar clipping angle start value ，range [0,18000]
+    angle_disable_max: 0                    #lidar clipping angle end value ，range [0,18000]
     topic_name: lslidar_point_cloud         #point cloud topic name, can be modified
     horizontal_angle_resolution: 0.2     #10Hz:0.2  20Hz:0.4 5Hz: 0.1
     use_time_service: true                # Whether gps time synchronization
@@ -196,4 +196,24 @@ version : LSLIDAR_CHX1_V1.0.0_221116_ROS2
 Modify:  original version
 
 Date    : 2022-11-16
+
+----
+
+
+
+update version:LSLIDAR_CHX1_V1.0.1_230316_ROS2
+
+Modify:  
+
+Reduce CPU consumption,
+
+Change the time of point to relative time,
+
+New compatible cx128s2 radar.
+
+Date    : 2023-03-16
+
+----
+
+
 

@@ -2,7 +2,7 @@
 
 ## 1.工程介绍
 
-​		LSLIDAR_CHX1_V1.0.0_221116_ROS2为linux环境下雷达ros2驱动，适用于镭神ch16x1/ch64w/ch128x1/ch128s1的雷达 ，程序在ubuntu18.04 ros dashing , ubuntu18.04 ros eloquent ,ubuntu 20.04 ros foxy,ubuntu 20.04 ros galactic以及ubuntu22.04 ros humble下测试通过。
+​		LSLIDAR_CHX1_V1.0.0_221116_ROS2为linux环境下雷达ros2驱动，适用于镭神ch16x1/ch64w/ch128x1/ch128s1/cx128s2的雷达 ，程序在ubuntu18.04 ros dashing , ubuntu18.04 ros eloquent ,ubuntu 20.04 ros foxy,ubuntu 20.04 ros galactic以及ubuntu22.04 ros humble下测试通过。
 
 ## 2.依赖
 
@@ -64,7 +64,7 @@ ros2 launch lslidar_driver lslidar_ch128s1_double_launch.py
 /ch16x1/lslidar_driver_node:
   ros__parameters:
     device_ip: 192.168.1.200        #雷达ip
-    lidar_type: ch16x1              #雷达类型  ch16x1/ch64w/ch128x1/ch128s1
+    lidar_type: ch16x1              #雷达类型  ch16x1/ch64w/ch128x1/ch128s1/cx128s2
     msop_port: 2368                 #数据包目的端口
     difop_port: 2369                #设备包目的端口
     pcl_type: false                 #点云类型，默认false点云中的点为xyzirt字段。改为true，点云中的点为xyzi字段。
@@ -74,15 +74,15 @@ ros2 launch lslidar_driver lslidar_ch128s1_double_launch.py
     min_range: 0.3                  #单位，米。雷达盲区最小值，小于此值的点被过滤
     max_range: 200.0                #单位，米。雷达盲区最大值 ，大于此值的点被过滤
     packet_rate: 1409.0             #播放pcap时，每秒钟播放的包数
-    angle_disable_min: 0            #雷达裁剪角度开始值 ，范围[0,180]
-    angle_disable_max: 0            #雷达裁剪角度结束值，范围[0,180]
+    angle_disable_min: 0            #雷达裁剪角度开始值 ，范围[0,18000]
+    angle_disable_max: 0            #雷达裁剪角度结束值，范围[0,18000]
     topic_name: lslidar_point_cloud         #点云话题名称，可修改
     horizontal_angle_resolution: 0.2     #10Hz:0.2  20Hz:0.4 5Hz: 0.1
     use_time_service: true                #是否使用GPS/ptp/ntp授时
     echo_num: 0                          #仅双回波模式下有效，0表示发布所有点云，1表示发布第一次回波点云，2表示发布第二次回波点云
     publish_scan: false                     #是否发布scan
     scan_num: 15                            #laserscan线号
-    #pcap: /home/ls/work/fuhong/data/V4.0/c32w.pcap                        #pcap包路径，加载pcap包时打开此注释
+    #pcap: /home/ls/work/xxx.pcap                        #pcap包路径，加载pcap包时打开此注释
 ~~~
 
 ### 组播模式：
@@ -149,6 +149,16 @@ Date    : 2022-11-16
 ---------------
 
 
+
+Update version : LSLIDAR_CHX1_V1.0.1_230316_ROS2
+
+Modify:  
+
+降低cpu占用；点的时间改为相对时间；新增兼容cx128s2 雷达。
+
+Date    : 2023-03-16
+
+---------------
 
 
 

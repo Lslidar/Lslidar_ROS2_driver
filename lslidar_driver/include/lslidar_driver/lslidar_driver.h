@@ -65,7 +65,10 @@
 namespace lslidar_ch_driver {
 
     static const double DISTANCE_RESOLUTION = 0.0000390625; /**< meters */
-
+    static const double sqrt_0_5 = sqrt(0.5);
+    static const double pow1 = -3.6636 * pow(10, -7);
+    static const double pow2 = 5.2766 * pow(10, -5);
+    static const double pow3 = 1.4507 * pow(10, -4);
     static const double big_angle[32] = {-17, -16, -15, -14, -13, -12, -11, -10,
                                          -9, -8, -7, -6, -5, -4.125, -4, -3.125,
                                          -3, -2.125, -2, -1.125, -1, -0.125, 0, 0.875,
@@ -93,13 +96,12 @@ namespace lslidar_ch_driver {
             std::sin(scan_mirror_altitude[0]), std::sin(scan_mirror_altitude[1]),
             std::sin(scan_mirror_altitude[2]), std::sin(scan_mirror_altitude[3]),
     };*/
-    struct PointXYZITM {
+    struct PointXYZIRT {
         PCL_ADD_POINT4D
 
         float intensity;
         uint16_t ring;
-        double time;
-
+        float time;
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW  // make sure our new allocators are aligned
     } EIGEN_ALIGN16;
 // enforce SSE padding for correct memory alignment
@@ -127,7 +129,7 @@ namespace lslidar_ch_driver {
         struct Firing {
             //double vertical_angle;
             int vertical_line;
-            double azimuth;
+            int azimuth;
             double distance;
             float intensity;
             double time;
@@ -146,7 +148,7 @@ namespace lslidar_ch_driver {
 
         void publishPointCloud();
 
-        int convertCoordinate(struct Firing lidardata);
+        int convertCoordinate(struct Firing &lidardata);
 
         bool polling();
 
@@ -198,14 +200,23 @@ namespace lslidar_ch_driver {
         double prism_offset;
         double min_range;
         double max_range;
-        double angle_disable_min;
-        double angle_disable_max;
+        int angle_disable_min;
+        int angle_disable_max;
         int channel_num;
         int channel_num1;
         int channel_num2;
         int echo_num;
 
         double horizontal_angle_resolution;
+        double sin_list[36000]{};
+        double cos_list[36000]{};
+        pcl::PointCloud<PointXYZIRT>::Ptr point_cloud_xyzirt_;
+        pcl::PointCloud<pcl::PointXYZI>::Ptr point_cloud_xyzi_;
+        pcl::PointCloud<PointXYZIRT>::Ptr point_cloud_xyzirt_bak_;
+        pcl::PointCloud<pcl::PointXYZI>::Ptr point_cloud_xyzi_bak_;
+        sensor_msgs::msg::LaserScan::UniquePtr  scan_msg;
+        sensor_msgs::msg::LaserScan::UniquePtr scan_msg_bak;
+        uint point_size;
 
 
         // ROS related variables
@@ -213,19 +224,18 @@ namespace lslidar_ch_driver {
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_pub;
         rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_pub;
 
-        lslidar_msgs::msg::LslidarScan::UniquePtr sweep_data;
-        lslidar_msgs::msg::LslidarScan::UniquePtr sweep_data_bak;
+        //lslidar_msgs::msg::LslidarScan::UniquePtr sweep_data;
+        //lslidar_msgs::msg::LslidarScan::UniquePtr sweep_data_bak;
 
 
         // add for time synchronization
         bool use_time_service;
-        bool use_gps;
         std::string time_service_mode;
         bool publish_laserscan;
         bool gain_prism_angle;
-
-        uint64_t packet_timestamp_s;
-        uint64_t packet_timestamp_ns;
+        bool is_update_difop_packet;
+        uint32_t packet_timestamp_s;
+        uint32_t packet_timestamp_ns;
         double packet_timestamp;
         double last_packet_timestamp;
         double point_cloud_timestamp;
@@ -261,16 +271,16 @@ namespace lslidar_ch_driver {
 
     typedef LslidarChDriver::LslidarChDriverPtr LslidarChDriverPtr;
     typedef LslidarChDriver::LslidarChDriverConstPtr LslidarChDriverConstPtr;
-    typedef PointXYZITM VPoint;
+    typedef PointXYZIRT VPoint;
     typedef pcl::PointCloud<VPoint> VPointCloud;
 
 } // namespace lslidar_driver
 
-POINT_CLOUD_REGISTER_POINT_STRUCT(lslidar_ch_driver::PointXYZITM,
+POINT_CLOUD_REGISTER_POINT_STRUCT(lslidar_ch_driver::PointXYZIRT,
                                   (float, x, x)(float, y, y)(float, z, z)
                                           (float, intensity, intensity)
                                           (std::uint16_t, ring, ring)
-                                          (double , time, time)
+                                          (float, time, time)
 )
 
 #endif // _LSLIDAR_Ch_DRIVER_H_

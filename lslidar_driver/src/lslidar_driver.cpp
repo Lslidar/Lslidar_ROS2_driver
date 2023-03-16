@@ -30,19 +30,30 @@ namespace lslidar_ch_driver {
             const rclcpp::NodeOptions &options) :
             rclcpp::Node("lslidar_node", options),
             socket_id(-1),
-            sweep_data(new lslidar_msgs::msg::LslidarScan()),
-            sweep_data_bak(new lslidar_msgs::msg::LslidarScan()),
+         //   sweep_data(new lslidar_msgs::msg::LslidarScan()),
+         //   sweep_data_bak(new lslidar_msgs::msg::LslidarScan()),
+            point_cloud_xyzirt_(new pcl::PointCloud<VPoint>),
+            point_cloud_xyzi_(new pcl::PointCloud<pcl::PointXYZI>),
+            point_cloud_xyzirt_bak_(new pcl::PointCloud<VPoint>),
+            point_cloud_xyzi_bak_(new pcl::PointCloud<pcl::PointXYZI>),
+            scan_msg(new sensor_msgs::msg::LaserScan()),
+            scan_msg_bak(new sensor_msgs::msg::LaserScan()),
             time_service_mode("gps"),
             gain_prism_angle(true) {
         prism_offset = 0.0;
         last_packet_timestamp = 0.0;
+        is_update_difop_packet = false;
+        for (int j = 0; j < 36000; ++j) {
+            sin_list[j] = sin(j * 0.01 * DEG_TO_RAD);
+            cos_list[j] = cos(j * 0.01 * DEG_TO_RAD);
+        }
 
         return;
     }
 
     LslidarChDriver::~LslidarChDriver() {
 
-        if (NULL == difop_thread_) {
+        if (nullptr == difop_thread_) {
             difop_thread_->join();
         }
         return;
@@ -61,8 +72,8 @@ namespace lslidar_ch_driver {
         this->declare_parameter<double>("min_range", 0.3);
         this->declare_parameter<double>("max_range", 150.0);
         this->declare_parameter<double>("packet_rate", 1695.0);
-        this->declare_parameter<double>("angle_disable_min", 0.0);
-        this->declare_parameter<double>("angle_disable_max", 0.0);
+        this->declare_parameter<int>("angle_disable_min", 0);
+        this->declare_parameter<int>("angle_disable_max", 0);
         this->declare_parameter<std::string>("topic_name", "lslidar_point_cloud");
         this->declare_parameter<double>("horizontal_angle_resolution", 0.2);
         this->declare_parameter<bool>("use_time_service", false);
@@ -103,8 +114,8 @@ namespace lslidar_ch_driver {
         RCLCPP_INFO(this->get_logger(), "min_range: %f", min_range);
         RCLCPP_INFO(this->get_logger(), "max_range: %f", max_range);
         RCLCPP_INFO(this->get_logger(), "packet_rate: %f", packet_rate);
-        RCLCPP_INFO(this->get_logger(), "angle_disable_min: %f", angle_disable_min);
-        RCLCPP_INFO(this->get_logger(), "angle_disable_max: %f", angle_disable_max);
+        RCLCPP_INFO(this->get_logger(), "angle_disable_min: %d", angle_disable_min);
+        RCLCPP_INFO(this->get_logger(), "angle_disable_max: %d", angle_disable_max);
         RCLCPP_INFO(this->get_logger(), "topic_name: %s", pointcloud_topic.c_str());
         RCLCPP_INFO(this->get_logger(), "horizontal_angle_resolution: %f", horizontal_angle_resolution);
         RCLCPP_INFO(this->get_logger(), "use_time_service: %d", use_time_service);
@@ -113,8 +124,6 @@ namespace lslidar_ch_driver {
         RCLCPP_INFO(this->get_logger(), "echo_num: %d", echo_num);
 
         inet_aton(lidar_ip_string.c_str(), &lidar_ip);
-        angle_disable_min = angle_disable_min * DEG_TO_RAD;
-        angle_disable_max = angle_disable_max * DEG_TO_RAD;
 
         if (add_multicast) RCLCPP_WARN(this->get_logger(),"Opening UDP socket: group_address  %s" ,group_ip_string.c_str());
 
@@ -152,7 +161,7 @@ namespace lslidar_ch_driver {
         laserscan_pub = this->create_publisher<sensor_msgs::msg::LaserScan>("scan", 10);
 
         if (dump_file != "") {
-            if (lidar_type == "ch128s1" || lidar_type == "ch16x1") {
+            if (lidar_type == "ch128s1" || lidar_type == "ch16x1" || lidar_type == "cx128s2") {
                 msop_input_.reset(new lslidar_ch_driver::InputPCAP(this, msop_udp_port, 1212, packet_rate, dump_file));
                 difop_input_.reset(new lslidar_ch_driver::InputPCAP(this, difop_udp_port, 1206, 1, dump_file));
             } else {
@@ -161,7 +170,7 @@ namespace lslidar_ch_driver {
             }
 
         } else {
-            if (lidar_type == "ch128s1" || lidar_type == "ch16x1") {
+            if (lidar_type == "ch128s1" || lidar_type == "ch16x1" || lidar_type == "cx128s2") {
                 msop_input_.reset(new lslidar_ch_driver::InputSocket(this, msop_udp_port, 1212));
                 difop_input_.reset(new lslidar_ch_driver::InputSocket(this, difop_udp_port, 1206));
             } else {
@@ -213,7 +222,7 @@ namespace lslidar_ch_driver {
                 cos_theta_1[i] = cos(big_angle[i / 4] * DEG_TO_RAD);
             }
 
-            if (lidar_type == "ch128s1") {
+            if (lidar_type == "ch128s1" || lidar_type == "cx128s2") {
                 sin_theta_1[i] = sin(big_angle_ch128s1[i / 4] * DEG_TO_RAD);
                 cos_theta_1[i] = cos(big_angle_ch128s1[i / 4] * DEG_TO_RAD);
             }
@@ -237,6 +246,23 @@ namespace lslidar_ch_driver {
             RCLCPP_ERROR(this->get_logger(), "Cannot create all ROS IO...");
             return false;
         }
+        point_cloud_xyzirt_->header.frame_id = frame_id;
+        point_cloud_xyzirt_->height = 1;
+
+        point_cloud_xyzi_->header.frame_id = frame_id;
+        point_cloud_xyzi_->height = 1;
+        if (publish_laserscan) {
+            scan_msg->angle_min = DEG2RAD(0);
+            scan_msg->angle_max = DEG2RAD(180);
+            scan_msg->range_min = min_range;
+            scan_msg->range_max = max_range;
+            scan_msg->angle_increment = horizontal_angle_resolution * DEG_TO_RAD;
+
+            point_size = ceil((scan_msg->angle_max - scan_msg->angle_min) / scan_msg->angle_increment);
+            if (lidar_type == "ch64w") { point_size *= 2; }
+            scan_msg->ranges.assign(point_size, std::numeric_limits<float>::quiet_NaN());
+            scan_msg->intensities.assign(point_size, std::numeric_limits<float>::quiet_NaN());
+        }
 
         return true;
     }
@@ -244,139 +270,36 @@ namespace lslidar_ch_driver {
 
     void LslidarChDriver::publishLaserScan() {
         std::unique_lock<std::mutex> lock(pointcloud_lock);
-        if (lidar_type == "ch64w") {
-            sensor_msgs::msg::LaserScan::UniquePtr scan_msg(new sensor_msgs::msg::LaserScan());
-            scan_msg->header.frame_id = frame_id;
-            scan_msg->angle_min = DEG2RAD(0);
-            scan_msg->angle_max = DEG2RAD(180);
-            scan_msg->range_min = min_range;
-            scan_msg->range_max = max_range;
-            scan_msg->angle_increment = horizontal_angle_resolution * DEG_TO_RAD;
-            uint point_size = ceil((scan_msg->angle_max - scan_msg->angle_min) / scan_msg->angle_increment) * 2;
-            scan_msg->ranges.assign(point_size, std::numeric_limits<float>::quiet_NaN());
-            scan_msg->intensities.assign(point_size, std::numeric_limits<float>::quiet_NaN());
-
-            //scan_msg->header.stamp = pcl_conversions::fromPCL(point_cloud_timestamp);
-            scan_msg->header.stamp = rclcpp::Time(point_cloud_timestamp);
-
-            if (channel_num / 4 % 2 == 0) {
-                channel_num1 = channel_num;
-                channel_num2 = channel_num + 4;
-            } else {
-                channel_num1 = channel_num;
-                channel_num2 = channel_num - 4;
-            }
-            if (sweep_data_bak->points.size() > 0) {
-                for (size_t j = 0; j < sweep_data_bak->points.size() - 1; ++j) {
-                    if (channel_num1 == sweep_data_bak->points[j].line ||
-                        channel_num2 == sweep_data_bak->points[j].line) {
-                        float horizontal_angle = sweep_data_bak->points[j].azimuth;
-                        uint point_idx = (int) ((horizontal_angle - scan_msg->angle_min) / scan_msg->angle_increment);
-                        point_idx = (point_idx < point_size) ? point_idx : (point_idx % point_size);
-                        scan_msg->ranges[point_idx] = sweep_data_bak->points[j].distance;
-                        scan_msg->intensities[point_idx] = sweep_data_bak->points[j].intensity;
-                    }
-                }
-                laserscan_pub->publish(std::move(scan_msg));
-            }
-
-        } else {
-            sensor_msgs::msg::LaserScan::UniquePtr scan_msg(new sensor_msgs::msg::LaserScan());
-            scan_msg->header.frame_id = frame_id;
-
-            //scan_msg->header.stamp = pcl_conversions::fromPCL(point_cloud_timestamp);
-            scan_msg->header.stamp = rclcpp::Time(point_cloud_timestamp);
-
-            scan_msg->angle_min = DEG2RAD(0);
-            scan_msg->angle_max = DEG2RAD(180);
-            scan_msg->range_min = min_range;
-            scan_msg->range_max = max_range;
-            scan_msg->angle_increment = horizontal_angle_resolution * DEG_TO_RAD;
-            uint point_size = ceil((scan_msg->angle_max - scan_msg->angle_min) / scan_msg->angle_increment);
-            scan_msg->ranges.assign(point_size, std::numeric_limits<float>::quiet_NaN());
-            scan_msg->intensities.assign(point_size, std::numeric_limits<float>::quiet_NaN());
-            if (sweep_data_bak->points.size() > 0) {
-                for (size_t j = 0; j < sweep_data_bak->points.size(); ++j) {
-                    if (channel_num == sweep_data_bak->points[j].line) {
-                        float horizontal_angle = sweep_data_bak->points[j].azimuth;
-                        uint point_index = (int) ((horizontal_angle - scan_msg->angle_min) / scan_msg->angle_increment);
-                        point_index = (point_index < point_size) ? point_index : (point_index % point_size);
-                        scan_msg->ranges[point_index] = sweep_data_bak->points[j].distance;
-                        scan_msg->intensities[point_index] = sweep_data_bak->points[j].intensity;
-                    }
-                }
-                laserscan_pub->publish(std::move(scan_msg));
-            }
-
-        }
-
+        if (!is_update_difop_packet) { return; }
+        scan_msg_bak->header.frame_id = frame_id;
+        scan_msg_bak->header.stamp = rclcpp::Time(point_cloud_timestamp * 1e9);
+        laserscan_pub->publish(std::move(scan_msg_bak));
     }
 
     void LslidarChDriver::publishPointCloud() {
+        if (!is_update_difop_packet) { return; }
         std::unique_lock<std::mutex> lock(pointcloud_lock);
+
         if (pcl_type) {
-            pcl::PointCloud<pcl::PointXYZI>::Ptr point_cloud(new pcl::PointCloud<pcl::PointXYZI>);
-            point_cloud->header.frame_id = frame_id;
-            point_cloud->height = 1;
-            point_cloud->header.stamp = static_cast<uint64_t>(point_cloud_timestamp * 1e6);
-            pcl::PointXYZI point;
-            if (sweep_data_bak->points.size() > 0) {
-
-                //   point_cloud->header.stamp = point_cloud_timestamp;
-                for (size_t j = 0; j < sweep_data_bak->points.size(); ++j) {
-                    if ((sweep_data_bak->points[j].azimuth > angle_disable_min) and
-                        (sweep_data_bak->points[j].azimuth < angle_disable_max)) {
-                        continue;
-                    }
-                    point.x = sweep_data_bak->points[j].x;
-                    point.y = sweep_data_bak->points[j].y;
-                    point.z = sweep_data_bak->points[j].z;
-                    point.intensity = sweep_data_bak->points[j].intensity;
-                    point_cloud->points.push_back(point);
-                    ++point_cloud->width;
-                }
-                sensor_msgs::msg::PointCloud2 pc_msg;
-                pcl::toROSMsg(*point_cloud, pc_msg);
-                //pc_msg.header.stamp = rclcpp::Time(point_cloud_timestamp);
-                pointcloud_pub->publish(pc_msg);
-            }
-        }
-        else {
-            pcl::PointCloud<VPoint>::Ptr point_cloud(new pcl::PointCloud<VPoint>);
-            point_cloud->header.frame_id = frame_id;
-            point_cloud->height = 1;
-            point_cloud->header.stamp = static_cast<uint64_t>(point_cloud_timestamp * 1e6);
-
-            //pcl::PointXYZI point;
-            VPoint point;
-            if (sweep_data_bak->points.size() > 0) {
-                // point_cloud->header.stamp = point_cloud_timestamp;
-                for (size_t j = 0; j < sweep_data_bak->points.size(); ++j) {
-                    if ((sweep_data_bak->points[j].azimuth > angle_disable_min) and
-                        (sweep_data_bak->points[j].azimuth < angle_disable_max)) {
-                        continue;
-                    }
-                    point.time = sweep_data_bak->points[j].time;
-                    point.x = sweep_data_bak->points[j].x;
-                    point.y = sweep_data_bak->points[j].y;
-                    point.z = sweep_data_bak->points[j].z;
-                    point.intensity = sweep_data_bak->points[j].intensity;
-                    point.ring = sweep_data_bak->points[j].line;
-                    point_cloud->points.push_back(point);
-                    ++point_cloud->width;
-                }
-                sensor_msgs::msg::PointCloud2 pc_msg;
-                pcl::toROSMsg(*point_cloud, pc_msg);
-                //pc_msg.header.stamp = rclcpp::Time(point_cloud_timestamp);
-                pointcloud_pub->publish(pc_msg);
-            }
+            sensor_msgs::msg::PointCloud2 pc_msg;
+            pcl::toROSMsg(*point_cloud_xyzi_bak_, pc_msg);
+            pc_msg.header.stamp = rclcpp::Time(point_cloud_timestamp * 1e9);
+            pointcloud_pub->publish(pc_msg);
+        } else {
+            sensor_msgs::msg::PointCloud2 pc_msg;
+            pcl::toROSMsg(*point_cloud_xyzirt_bak_, pc_msg);
+            pc_msg.header.stamp = rclcpp::Time(point_cloud_timestamp * 1e9);
+            pointcloud_pub->publish(pc_msg);
         }
         return;
     }
 
 
-    int LslidarChDriver::convertCoordinate(struct Firing lidardata) {
-        if (!isPointInRange(lidardata.distance) || lidardata.azimuth > 180.0 * DEG_TO_RAD) {
+    int LslidarChDriver::convertCoordinate(struct Firing &lidardata) {
+        if (!isPointInRange(lidardata.distance) || lidardata.azimuth > 18000) {
+            return -1;
+        }
+        if ((lidardata.azimuth > angle_disable_min) && (lidardata.azimuth < angle_disable_max)) {
             return -1;
         }
 
@@ -392,37 +315,39 @@ namespace lslidar_ch_driver {
         double sin_H_xita;
         double cos_xita_F;
         double sin_xita_F;
-        if (lidar_type == "ch128x1" || lidar_type == "ch128s1") {
+        if (lidar_type == "ch128x1" || lidar_type == "ch128s1" || lidar_type == "cx128s2") {
             _R_ = cos_theta_2[lidardata.vertical_line] * cos_theta_1[lidardata.vertical_line] *
-                  cos(lidardata.azimuth / 2.0) -
+                  cos_list[int(lidardata.azimuth * 0.5)] -
                   sin_theta_2[lidardata.vertical_line] * sin_theta_1[lidardata.vertical_line];
 
             sin_theat = sin_theta_1[lidardata.vertical_line] + 2 * _R_ * sin_theta_2[lidardata.vertical_line];
             cos_theat = sqrt(1 - pow(sin_theat, 2));
-            x = lidardata.distance * cos_theat * cos(lidardata.azimuth);
-            y = lidardata.distance * cos_theat * sin(lidardata.azimuth);
+            x = lidardata.distance * cos_theat * cos_list[lidardata.azimuth];
+            y = lidardata.distance * cos_theat * sin_list[lidardata.azimuth];
             z = lidardata.distance * sin_theat;
-
         } else if (lidar_type == "ch16x1") {
             //中间变量
             _R_ = ch16x1_cos_theta_2[lidardata.vertical_line] * ch16x1_cos_theta_1[lidardata.vertical_line] *
-                  cos(lidardata.azimuth / 2.0) -
+                  cos_list[int(lidardata.azimuth * 0.5)] -
                   ch16x1_sin_theta_2[lidardata.vertical_line] * ch16x1_sin_theta_1[lidardata.vertical_line];
 
             sin_theat =
                     ch16x1_sin_theta_1[lidardata.vertical_line] + 2 * _R_ * ch16x1_sin_theta_2[lidardata.vertical_line];
             cos_theat = sqrt(1 - pow(sin_theat, 2));
-            x = lidardata.distance * cos_theat * cos(lidardata.azimuth);
-            y = lidardata.distance * cos_theat * sin(lidardata.azimuth);
+            x = lidardata.distance * cos_theat * cos_list[lidardata.azimuth];
+            y = lidardata.distance * cos_theat * sin_list[lidardata.azimuth];
             z = lidardata.distance * sin_theat;
         } else if (lidar_type == "ch64w") {
             int line_num = lidardata.vertical_line;
             if (line_num / 4 % 2 == 0) {
-                cos_xita = cos(lidardata.azimuth * 0.5 + 22.5 * DEG_TO_RAD);
-                sin_xita = sin(lidardata.azimuth * 0.5 + 22.5 * DEG_TO_RAD);
+                cos_xita = cos_list[int(lidardata.azimuth * 0.5 + 2250)];
+                sin_xita = sin_list[int(lidardata.azimuth * 0.5 + 2250)];
             } else {
-                cos_xita = cos(-lidardata.azimuth * 0.5 + 112.5 * DEG_TO_RAD);
-                sin_xita = sin(-lidardata.azimuth * 0.5 + 112.5 * DEG_TO_RAD);
+                int angle_tmp =
+                        int(11250 - lidardata.azimuth * 0.5) < 0 ? int(11250 - lidardata.azimuth * 0.5) + 36000 : int(
+                                11250 - lidardata.azimuth * 0.5);
+                cos_xita = cos_list[angle_tmp];
+                sin_xita = sin_list[angle_tmp];
             }
             _R_ = ch64w_cos_theta_2[line_num] * ch64w_cos_theta_1[line_num] * cos_xita -
                   ch64w_sin_theta_2[line_num] * ch64w_sin_theta_1[line_num];
@@ -434,34 +359,46 @@ namespace lslidar_ch_driver {
             sin_H_xita = (2 * _R_ * ch64w_cos_theta_2[line_num] * sin_xita) / cos_theat;
 
             if (line_num / 4 % 2 == 0) {
-                cos_xita_F = (cos_H_xita + sin_H_xita) * sqrt(0.5);
+                cos_xita_F = (cos_H_xita + sin_H_xita) * sqrt_0_5;
                 //sin_xita_F = sqrt(1 - pow(cos_xita_F, 2));
                 // sin_xita_F = (sin_H_xita - cos_H_xita) * sqrt(0.5);
                 if (cos_xita_F > 1.0) {
                     cos_xita_F = 1.0;
                 }
                 double xita_hangle = acos(cos_xita_F) * RAD_TO_DEG;
-                double xita_hangle_new = -3.6636 * pow(10, -7) * pow(xita_hangle, 3)
-                                         + 5.2766 * pow(10, -5) * pow(xita_hangle, 2)
+                double xita_hangle_new = pow1 * pow(xita_hangle, 3)
+                                         + pow2 * pow(xita_hangle, 2)
                                          + 0.9885 * pow(xita_hangle, 1)
                                          + 0.5894;
-                cos_xita_F = cos(xita_hangle_new * DEG_TO_RAD);
-                sin_xita_F = sin(xita_hangle_new * DEG_TO_RAD);
+                while (xita_hangle_new < 0.0) {
+                    xita_hangle_new += 360.0;
+                }
+                int xita_hangle_new_index = int(xita_hangle_new * 100) % 36000;
+                cos_xita_F = cos_list[xita_hangle_new_index];
+                sin_xita_F = sin_list[xita_hangle_new_index];
+                // cos_xita_F = cos(xita_hangle_new * DEG_TO_RAD);
+                // sin_xita_F = sin(xita_hangle_new * DEG_TO_RAD);
                 add_distance = 0.017;
             } else {
-                cos_xita_F = (cos_H_xita + sin_H_xita) * (-sqrt(0.5));
+                cos_xita_F = (cos_H_xita + sin_H_xita) * (-sqrt_0_5);
                 //sin_xita_F = sqrt(1 - pow(cos_xita_F, 2));
                 // sin_xita_F = (sin_H_xita - cos_H_xita) * sqrt(0.5);
                 if (cos_xita_F < -1.0) {
                     cos_xita_F = -1.0;
                 }
                 double xita_hangle = acos(cos_xita_F) * RAD_TO_DEG;
-                double xita_hangle_new = -3.6636 * pow(10, -7) * pow(xita_hangle, 3)
-                                         + 1.4507 * pow(10, -4) * pow(xita_hangle, 2)
+                double xita_hangle_new = pow1 * pow(xita_hangle, 3)
+                                         + pow3 * pow(xita_hangle, 2)
                                          + 0.9719 * pow(xita_hangle, 1)
                                          + 1.9003;
-                cos_xita_F = cos(xita_hangle_new * DEG_TO_RAD);
-                sin_xita_F = sin(xita_hangle_new * DEG_TO_RAD);
+                while (xita_hangle_new < 0.0) {
+                    xita_hangle_new += 360.0;
+                }
+                int xita_hangle_new_index = int(xita_hangle_new * 100) % 36000;
+                cos_xita_F = cos_list[xita_hangle_new_index];
+                sin_xita_F = sin_list[xita_hangle_new_index];
+                //  cos_xita_F = cos(xita_hangle_new * DEG_TO_RAD);
+                //  sin_xita_F = sin(xita_hangle_new * DEG_TO_RAD);
                 add_distance = -0.017;
             }
 
@@ -469,21 +406,57 @@ namespace lslidar_ch_driver {
             y = lidardata.distance * cos_theat * sin_xita_F;
             z = lidardata.distance * sin_theat;
         }
+        //add point
+        if (pcl_type) {
+            pcl::PointXYZI point_xyzi;
+            point_xyzi.x = x;
+            point_xyzi.y = y;
+            point_xyzi.z = z;
+            point_xyzi.intensity = lidardata.intensity;
+            point_cloud_xyzi_->points.push_back(point_xyzi);
+            ++point_cloud_xyzi_->width;
+        } else {
+            //pcl::PointXYZI point;
+            VPoint point;
+            point.time = lidardata.time;
+            point.x = x;
+            point.y = y;
+            point.z = z;
+            point.intensity = lidardata.intensity;
+            point.ring = lidardata.vertical_line;
+            point_cloud_xyzirt_->points.push_back(point);
+            ++point_cloud_xyzirt_->width;
+        }
+        // laserscan
+        if (publish_laserscan) {
+            if (lidar_type == "ch64w") {
+                if (channel_num / 4 % 2 == 0) {
+                    channel_num1 = channel_num;
+                    channel_num2 = channel_num + 4;
+                } else {
+                    channel_num1 = channel_num;
+                    channel_num2 = channel_num - 4;
+                }
 
+                if (channel_num1 == lidardata.vertical_line ||
+                    channel_num2 == lidardata.vertical_line) {
+                    float horizontal_angle = lidardata.azimuth * 0.01f * DEG_TO_RAD;
+                    uint point_idx = (int) ((horizontal_angle - scan_msg->angle_min) / scan_msg->angle_increment);
+                    point_idx = (point_idx < point_size) ? point_idx : (point_idx % point_size);
+                    scan_msg->ranges[point_idx] = lidardata.distance;
+                    scan_msg->intensities[point_idx] = lidardata.intensity;
+                }
+            } else {
+                if (channel_num == lidardata.vertical_line) {
+                    float horizontal_angle = lidardata.azimuth * 0.01f * DEG_TO_RAD;;
+                    uint point_index = (int) ((horizontal_angle - scan_msg->angle_min) / scan_msg->angle_increment);
+                    point_index = (point_index < point_size) ? point_index : (point_index % point_size);
+                    scan_msg->ranges[point_index] = lidardata.distance;
+                    scan_msg->intensities[point_index] = lidardata.intensity;
+                }
+            }
 
-        sweep_data->points.push_back(lslidar_msgs::msg::LslidarPoint());
-        lslidar_msgs::msg::LslidarPoint &new_point =        // new_point 为push_back最后一个的引用
-                sweep_data->points[sweep_data->points.size() - 1];
-
-        new_point.x = x;
-        new_point.y = y;
-        new_point.z = z;
-        new_point.vertical_angle = RAD2DEG(asin(sin_theat));
-        new_point.azimuth = lidardata.azimuth;
-        new_point.distance = lidardata.distance;
-        new_point.intensity = lidardata.intensity;
-        new_point.line = lidardata.vertical_line;
-        new_point.time = lidardata.time;
+        }
         return 0;
     }
 
@@ -523,23 +496,23 @@ namespace lslidar_ch_driver {
                 packet_timestamp_s = timegm(&cur_time);
                 if (time_service_mode=="gps") {          //gps
                     packet_timestamp_ns = (packet->data[1203] +
-                                           packet->data[1202] * pow(2, 8) +
-                                           packet->data[1201] * pow(2, 16) +
-                                           packet->data[1200] * pow(2, 24)) * 1e3; //ns
+                                           (packet->data[1202] << 8) +
+                                           (packet->data[1201] << 16) +
+                                           (packet->data[1200] << 24)) * 1e3; //ns
                 } else {               //ptp
                     packet_timestamp_ns = packet->data[1203] +
-                                          packet->data[1202] * pow(2, 8) +
-                                          packet->data[1201] * pow(2, 16) +
-                                          packet->data[1200] * pow(2, 24); //ns
+                            (packet->data[1202] << 8) +
+                            (packet->data[1201] << 16) +
+                            (packet->data[1200] << 24); //ns
                 }
                 packet_timestamp = packet_timestamp_s + packet_timestamp_ns * 1e-9;
                 // ch128x1_packet->timestamp = packet_timestamp;
             } else {
                 if (packet->data[1200] == 0xff) {             //ptp
                     packet_timestamp_s = packet->data[1205] +
-                                         packet->data[1204] * pow(2, 8) +
-                                         packet->data[1203] * pow(2, 16) +
-                                         packet->data[1202] * pow(2, 24);
+                            (packet->data[1204] << 8) +
+                            (packet->data[1203] << 16) +
+                            (packet->data[1202] << 24);
 
                 } else {
                     // struct tm cur_time{};
@@ -553,9 +526,9 @@ namespace lslidar_ch_driver {
                     packet_timestamp_s = timegm(&cur_time);
                 }
                 packet_timestamp_ns = packet->data[1209] +
-                                      packet->data[1208] * pow(2, 8) +
-                                      packet->data[1207] * pow(2, 16) +
-                                      packet->data[1206] * pow(2, 24); //ns
+                                              (packet->data[1208] << 8) +
+                                              (packet->data[1207] << 16) +
+                                              (packet->data[1206] << 24); //ns
                 packet_timestamp = packet_timestamp_s + packet_timestamp_ns * 1e-9;
                 // ch128s1_packet->timestamp = packet_timestamp;
             }
@@ -582,24 +555,15 @@ namespace lslidar_ch_driver {
                         point_cloud_timestamp =
                                 packet_timestamp - packet_interval_time + point_idx * packet_interval_time / 1197.0;
                     }
-                    // Compute the time of the point
-
-                    if (fabs(last_packet_timestamp) < 1e-6) {
-                        point_time = packet_timestamp;
-                    } else {
+                    if (packet->data[point_idx] < 128) {
+                        // Compute the time of the point
                         point_time = packet_timestamp - packet_interval_time +
-                                     (point_idx + 7) * packet_interval_time / 1197.0;
-                    }
-                    if (packet->data[point_idx] < 255) {
+                                     ((int)point_idx - 7) * packet_interval_time / (1197 * 1.0) - point_cloud_timestamp;
                         memset(&lidardata, 0, sizeof(lidardata));
                         lidardata.vertical_line = packet->data[point_idx];
-                        lidardata.azimuth =
-                                (packet->data[point_idx + 1] * 256 + packet->data[point_idx + 2]) /
-                                100.f *
-                                DEG_TO_RAD;
+                        lidardata.azimuth = (packet->data[point_idx + 1] << 8) + packet->data[point_idx + 2];
                         lidardata.distance =
-                                (packet->data[point_idx + 3] * 65536 +
-                                 packet->data[point_idx + 4] * 256 +
+                                ((packet->data[point_idx + 3] << 16) + (packet->data[point_idx + 4] << 8) +
                                  packet->data[point_idx + 5]) * DISTANCE_RESOLUTION;
                         lidardata.intensity = packet->data[point_idx + 6];
                         lidardata.time = point_time;
@@ -607,7 +571,12 @@ namespace lslidar_ch_driver {
                     }
                     if (packetType) {
                         //("---------------onesweep--------------------------\n");
-                        sweep_data_bak = std::move(sweep_data);
+                        {
+                            std::unique_lock<std::mutex> lock(pointcloud_lock);
+                            point_cloud_xyzirt_bak_ = point_cloud_xyzirt_;
+                            point_cloud_xyzi_bak_ = point_cloud_xyzi_;
+                            scan_msg_bak = std::move(scan_msg);
+                        }
                         std::thread ppc_thread(&LslidarChDriver::publishPointCloud, this);
                         ppc_thread.detach();
                         //publishPointCloud();
@@ -618,7 +587,27 @@ namespace lslidar_ch_driver {
                             //publishLaserScan();
                         }
                         packetType = false;
-                        sweep_data = std::make_unique<lslidar_msgs::msg::LslidarScan>();
+                        point_cloud_xyzirt_.reset(new pcl::PointCloud<VPoint>);
+                        point_cloud_xyzi_.reset(new pcl::PointCloud<pcl::PointXYZI>);
+                        point_cloud_xyzirt_->header.frame_id = frame_id;
+                        point_cloud_xyzirt_->height = 1;
+
+                        point_cloud_xyzi_->header.frame_id = frame_id;
+                        point_cloud_xyzi_->height = 1;
+                        if(publish_laserscan){
+                            scan_msg = std::make_unique<sensor_msgs::msg::LaserScan>();
+                            //scan_msg.reset(new sensor_msgs::msg::LaserScan);
+                            scan_msg->angle_min = DEG2RAD(0);
+                            scan_msg->angle_max = DEG2RAD(180);
+                            scan_msg->range_min = min_range;
+                            scan_msg->range_max = max_range;
+                            scan_msg->angle_increment = horizontal_angle_resolution * DEG_TO_RAD;
+                            point_size = ceil((scan_msg->angle_max - scan_msg->angle_min) / scan_msg->angle_increment);
+                            if (lidar_type == "ch64w") { point_size *= 2; }
+                            scan_msg->ranges.assign(point_size, std::numeric_limits<float>::quiet_NaN());
+                            scan_msg->intensities.assign(point_size, std::numeric_limits<float>::quiet_NaN());
+
+                        }
                     }
                 }
             }
@@ -633,24 +622,18 @@ namespace lslidar_ch_driver {
                         point_cloud_timestamp =
                                 packet_timestamp - packet_interval_time + point_idx * packet_interval_time / 1199.0;
                     }
-                    // Compute the time of the point
-                    if (fabs(last_packet_timestamp) < 1e-6) {
-                        point_time = packet_timestamp;
-                    } else {
+
+                    if (packet->data[point_idx] < 128) {
                         point_time = packet_timestamp - packet_interval_time +
-                                     (point_idx + 11) * packet_interval_time / 1199.0;
-                    }
-                    if (packet->data[point_idx] < 255) {
+                                     ((int)point_idx - 11) * packet_interval_time / (1199 * 1.0) - point_cloud_timestamp;
                         if (echo_num == 0) {
                             memset(&lidardata, 0, sizeof(lidardata));
                             lidardata.vertical_line = packet->data[point_idx];
                             lidardata.azimuth =
-                                    (packet->data[point_idx + 1] * 256 + packet->data[point_idx + 2]) /
-                                    100.f *
-                                    DEG_TO_RAD;
+                                    (packet->data[point_idx + 1] << 8) + packet->data[point_idx + 2];
+
                             lidardata.distance =
-                                    (packet->data[point_idx + 3] * 65536 +
-                                     packet->data[point_idx + 4] * 256 +
+                                    ((packet->data[point_idx + 3] << 16) + (packet->data[point_idx + 4] << 8) +
                                      packet->data[point_idx + 5]) * DISTANCE_RESOLUTION;
                             lidardata.intensity = packet->data[point_idx + 6];
                             lidardata.time = point_time;
@@ -659,12 +642,9 @@ namespace lslidar_ch_driver {
                             memset(&lidardata, 0, sizeof(lidardata));
                             lidardata.vertical_line = packet->data[point_idx];
                             lidardata.azimuth =
-                                    (packet->data[point_idx + 1] * 256 + packet->data[point_idx + 2]) /
-                                    100.f *
-                                    DEG_TO_RAD;
+                                    (packet->data[point_idx + 1] << 8) + packet->data[point_idx + 2];
                             lidardata.distance =
-                                    (packet->data[point_idx + 7] * 65536 +
-                                     packet->data[point_idx + 8] * 256 +
+                                    ((packet->data[point_idx + 7] << 16) + (packet->data[point_idx + 8] << 8) +
                                      packet->data[point_idx + 9]) * DISTANCE_RESOLUTION;
                             lidardata.intensity = packet->data[point_idx + 10];
                             lidardata.time = point_time;
@@ -673,12 +653,10 @@ namespace lslidar_ch_driver {
                             memset(&lidardata, 0, sizeof(lidardata));
                             lidardata.vertical_line = packet->data[point_idx];
                             lidardata.azimuth =
-                                    (packet->data[point_idx + 1] * 256 + packet->data[point_idx + 2]) /
-                                    100.f *
-                                    DEG_TO_RAD;
+                                    (packet->data[point_idx + 1] << 8) + packet->data[point_idx + 2];
+
                             lidardata.distance =
-                                    (packet->data[point_idx + 3] * 65536 +
-                                     packet->data[point_idx + 4] * 256 +
+                                    ((packet->data[point_idx + 3] << 16) + (packet->data[point_idx + 4] << 8) +
                                      packet->data[point_idx + 5]) * DISTANCE_RESOLUTION;
                             lidardata.intensity = packet->data[point_idx + 6];
                             lidardata.time = point_time;
@@ -687,12 +665,9 @@ namespace lslidar_ch_driver {
                             memset(&lidardata, 0, sizeof(lidardata));
                             lidardata.vertical_line = packet->data[point_idx];
                             lidardata.azimuth =
-                                    (packet->data[point_idx + 1] * 256 + packet->data[point_idx + 2]) /
-                                    100.f *
-                                    DEG_TO_RAD;
+                                    (packet->data[point_idx + 1] << 8) + packet->data[point_idx + 2];
                             lidardata.distance =
-                                    (packet->data[point_idx + 7] * 65536 +
-                                     packet->data[point_idx + 8] * 256 +
+                                    ((packet->data[point_idx + 7] << 16) + (packet->data[point_idx + 8] << 8) +
                                      packet->data[point_idx + 9]) * DISTANCE_RESOLUTION;
                             lidardata.intensity = packet->data[point_idx + 10];
                             lidardata.time = point_time;
@@ -704,7 +679,9 @@ namespace lslidar_ch_driver {
                         //("---------------onesweep--------------------------\n");
                         {
                             std::unique_lock<std::mutex> lock(pointcloud_lock);
-                            sweep_data_bak = std::move(sweep_data);
+                            point_cloud_xyzirt_bak_ = point_cloud_xyzirt_;
+                            point_cloud_xyzi_bak_ = point_cloud_xyzi_;
+                            scan_msg_bak = std::move(scan_msg);
                         }
                         std::thread ppc_thread(&LslidarChDriver::publishPointCloud, this);
                         ppc_thread.detach();
@@ -716,7 +693,27 @@ namespace lslidar_ch_driver {
                             //publishLaserScan();
                         }
                         packetType = false;
-                        sweep_data = std::make_unique<lslidar_msgs::msg::LslidarScan>();
+                        point_cloud_xyzirt_.reset(new pcl::PointCloud<VPoint>);
+                        point_cloud_xyzi_.reset(new pcl::PointCloud<pcl::PointXYZI>);
+                        point_cloud_xyzirt_->header.frame_id = frame_id;
+                        point_cloud_xyzirt_->height = 1;
+
+                        point_cloud_xyzi_->header.frame_id = frame_id;
+                        point_cloud_xyzi_->height = 1;
+                        if(publish_laserscan){
+                            scan_msg = std::make_unique<sensor_msgs::msg::LaserScan>();
+                            //scan_msg.reset(new sensor_msgs::msg::LaserScan);
+                            scan_msg->angle_min = DEG2RAD(0);
+                            scan_msg->angle_max = DEG2RAD(180);
+                            scan_msg->range_min = min_range;
+                            scan_msg->range_max = max_range;
+                            scan_msg->angle_increment = horizontal_angle_resolution * DEG_TO_RAD;
+                            point_size = ceil((scan_msg->angle_max - scan_msg->angle_min) / scan_msg->angle_increment);
+                            if (lidar_type == "ch64w") { point_size *= 2; }
+                            scan_msg->ranges.assign(point_size, std::numeric_limits<float>::quiet_NaN());
+                            scan_msg->intensities.assign(point_size, std::numeric_limits<float>::quiet_NaN());
+
+                        }
                     }
                 }
             }
@@ -731,23 +728,16 @@ namespace lslidar_ch_driver {
                                 packet_timestamp - packet_interval_time + point_idx * packet_interval_time / 1197.0;
 
                     }
-                    // Compute the time of the point
-                    if (fabs(last_packet_timestamp) < 1e-6) {
-                        point_time = packet_timestamp;
-                    } else {
+
+                    if (packet->data[point_idx] < 128) {
+                        // Compute the time of the point
                         point_time = packet_timestamp - packet_interval_time +
-                                     (point_idx + 7) * packet_interval_time / 1197.0;
-                    }
-                    if (packet->data[point_idx] < 255) {
+                                     ((int)point_idx - 7) * packet_interval_time / (1197 * 1.0) - point_cloud_timestamp;
                         memset(&lidardata, 0, sizeof(lidardata));
                         lidardata.vertical_line = packet->data[point_idx];
-                        lidardata.azimuth =
-                                (packet->data[point_idx + 1] * 256 + packet->data[point_idx + 2]) /
-                                100.f *
-                                DEG_TO_RAD;
+                        lidardata.azimuth = (packet->data[point_idx + 1] << 8) + packet->data[point_idx + 2];
                         lidardata.distance =
-                                (packet->data[point_idx + 3] * 65536 +
-                                 packet->data[point_idx + 4] * 256 +
+                                ((packet->data[point_idx + 3] << 16) + (packet->data[point_idx + 4] << 8) +
                                  packet->data[point_idx + 5]) * DISTANCE_RESOLUTION;
                         lidardata.intensity = packet->data[point_idx + 6];
                         lidardata.time = point_time;
@@ -757,7 +747,9 @@ namespace lslidar_ch_driver {
                         //("---------------onesweep--------------------------\n");
                         {
                             std::unique_lock<std::mutex> lock(pointcloud_lock);
-                            sweep_data_bak = std::move(sweep_data);
+                            point_cloud_xyzirt_bak_ = point_cloud_xyzirt_;
+                            point_cloud_xyzi_bak_ = point_cloud_xyzi_;
+                            scan_msg_bak = std::move(scan_msg);
                         }
                         std::thread ppc_thread(&LslidarChDriver::publishPointCloud, this);
                         ppc_thread.detach();
@@ -769,7 +761,27 @@ namespace lslidar_ch_driver {
                             //publishLaserScan();
                         }
                         packetType = false;
-                        sweep_data = std::make_unique<lslidar_msgs::msg::LslidarScan>();
+                        point_cloud_xyzirt_.reset(new pcl::PointCloud<VPoint>);
+                        point_cloud_xyzi_.reset(new pcl::PointCloud<pcl::PointXYZI>);
+                        point_cloud_xyzirt_->header.frame_id = frame_id;
+                        point_cloud_xyzirt_->height = 1;
+
+                        point_cloud_xyzi_->header.frame_id = frame_id;
+                        point_cloud_xyzi_->height = 1;
+                        if(publish_laserscan){
+                            scan_msg = std::make_unique<sensor_msgs::msg::LaserScan>();
+                            //scan_msg.reset(new sensor_msgs::msg::LaserScan);
+                            scan_msg->angle_min = DEG2RAD(0);
+                            scan_msg->angle_max = DEG2RAD(180);
+                            scan_msg->range_min = min_range;
+                            scan_msg->range_max = max_range;
+                            scan_msg->angle_increment = horizontal_angle_resolution * DEG_TO_RAD;
+                            point_size = ceil((scan_msg->angle_max - scan_msg->angle_min) / scan_msg->angle_increment);
+                            if (lidar_type == "ch64w") { point_size *= 2; }
+                            scan_msg->ranges.assign(point_size, std::numeric_limits<float>::quiet_NaN());
+                            scan_msg->intensities.assign(point_size, std::numeric_limits<float>::quiet_NaN());
+
+                        }
                     }
                 }
             } else if (packet->data[1211] == 0x02) {
@@ -781,24 +793,19 @@ namespace lslidar_ch_driver {
                                 packet_timestamp - packet_interval_time + point_idx * packet_interval_time / 1199.0;
 
                     }
-                    // Compute the time of the point
-                    if (fabs(last_packet_timestamp) < 1e-6) {
-                        point_time = packet_timestamp;
-                    } else {
+                    if (packet->data[point_idx] < 128) {
+
                         point_time = packet_timestamp - packet_interval_time +
-                                     (point_idx + 11) * packet_interval_time / 1199.0;
-                    }
-                    if (packet->data[point_idx] < 255) {
+                                     ((int)point_idx - 11) * packet_interval_time / (1199 * 1.0) - point_cloud_timestamp;
+
                         if (echo_num == 0) {
                             memset(&lidardata, 0, sizeof(lidardata));
                             lidardata.vertical_line = packet->data[point_idx];
                             lidardata.azimuth =
-                                    (packet->data[point_idx + 1] * 256 + packet->data[point_idx + 2]) /
-                                    100.f *
-                                    DEG_TO_RAD;
+                                    (packet->data[point_idx + 1] << 8) + packet->data[point_idx + 2];
+
                             lidardata.distance =
-                                    (packet->data[point_idx + 3] * 65536 +
-                                     packet->data[point_idx + 4] * 256 +
+                                    ((packet->data[point_idx + 3] << 16) + (packet->data[point_idx + 4] << 8) +
                                      packet->data[point_idx + 5]) * DISTANCE_RESOLUTION;
                             lidardata.intensity = packet->data[point_idx + 6];
                             lidardata.time = point_time;
@@ -807,41 +814,33 @@ namespace lslidar_ch_driver {
                             memset(&lidardata, 0, sizeof(lidardata));
                             lidardata.vertical_line = packet->data[point_idx];
                             lidardata.azimuth =
-                                    (packet->data[point_idx + 1] * 256 + packet->data[point_idx + 2]) /
-                                    100.f *
-                                    DEG_TO_RAD;
+                                    (packet->data[point_idx + 1] << 8) + packet->data[point_idx + 2];
                             lidardata.distance =
-                                    (packet->data[point_idx + 7] * 65536 +
-                                     packet->data[point_idx + 8] * 256 +
+                                    ((packet->data[point_idx + 7] << 16) + (packet->data[point_idx + 8] << 8) +
                                      packet->data[point_idx + 9]) * DISTANCE_RESOLUTION;
                             lidardata.intensity = packet->data[point_idx + 10];
                             lidardata.time = point_time;
                             convertCoordinate(lidardata);
-
                         } else if (echo_num == 1) {
                             memset(&lidardata, 0, sizeof(lidardata));
                             lidardata.vertical_line = packet->data[point_idx];
                             lidardata.azimuth =
-                                    (packet->data[point_idx + 1] * 256 + packet->data[point_idx + 2]) /
-                                    100.f *
-                                    DEG_TO_RAD;
+                                    (packet->data[point_idx + 1] << 8) + packet->data[point_idx + 2];
+
                             lidardata.distance =
-                                    (packet->data[point_idx + 3] * 65536 +
-                                     packet->data[point_idx + 4] * 256 +
+                                    ((packet->data[point_idx + 3] << 16) + (packet->data[point_idx + 4] << 8) +
                                      packet->data[point_idx + 5]) * DISTANCE_RESOLUTION;
                             lidardata.intensity = packet->data[point_idx + 6];
                             lidardata.time = point_time;
                             convertCoordinate(lidardata);
+
                         } else if (echo_num == 2) {
                             memset(&lidardata, 0, sizeof(lidardata));
                             lidardata.vertical_line = packet->data[point_idx];
                             lidardata.azimuth =
-                                    (packet->data[point_idx + 1] * 256 + packet->data[point_idx + 2]) /
-                                    100.f *
-                                    DEG_TO_RAD;
+                                    (packet->data[point_idx + 1] << 8) + packet->data[point_idx + 2];
                             lidardata.distance =
-                                    (packet->data[point_idx + 7] * 65536 +
-                                     packet->data[point_idx + 8] * 256 +
+                                    ((packet->data[point_idx + 7] << 16) + (packet->data[point_idx + 8] << 8) +
                                      packet->data[point_idx + 9]) * DISTANCE_RESOLUTION;
                             lidardata.intensity = packet->data[point_idx + 10];
                             lidardata.time = point_time;
@@ -852,7 +851,9 @@ namespace lslidar_ch_driver {
                         //("---------------onesweep--------------------------\n");
                         {
                             std::unique_lock<std::mutex> lock(pointcloud_lock);
-                            sweep_data_bak = std::move(sweep_data);
+                            point_cloud_xyzirt_bak_ = point_cloud_xyzirt_;
+                            point_cloud_xyzi_bak_ = point_cloud_xyzi_;
+                            scan_msg_bak = std::move(scan_msg);
                         }
                         std::thread ppc_thread(&LslidarChDriver::publishPointCloud, this);
                         ppc_thread.detach();
@@ -864,7 +865,27 @@ namespace lslidar_ch_driver {
                             //publishLaserScan();
                         }
                         packetType = false;
-                        sweep_data = std::make_unique<lslidar_msgs::msg::LslidarScan>();
+                        point_cloud_xyzirt_.reset(new pcl::PointCloud<VPoint>);
+                        point_cloud_xyzi_.reset(new pcl::PointCloud<pcl::PointXYZI>);
+                        point_cloud_xyzirt_->header.frame_id = frame_id;
+                        point_cloud_xyzirt_->height = 1;
+
+                        point_cloud_xyzi_->header.frame_id = frame_id;
+                        point_cloud_xyzi_->height = 1;
+                        if(publish_laserscan){
+                            scan_msg = std::make_unique<sensor_msgs::msg::LaserScan>();
+                            //scan_msg.reset(new sensor_msgs::msg::LaserScan);
+                            scan_msg->angle_min = DEG2RAD(0);
+                            scan_msg->angle_max = DEG2RAD(180);
+                            scan_msg->range_min = min_range;
+                            scan_msg->range_max = max_range;
+                            scan_msg->angle_increment = horizontal_angle_resolution * DEG_TO_RAD;
+                            point_size = ceil((scan_msg->angle_max - scan_msg->angle_min) / scan_msg->angle_increment);
+                            if (lidar_type == "ch64w") { point_size *= 2; }
+                            scan_msg->ranges.assign(point_size, std::numeric_limits<float>::quiet_NaN());
+                            scan_msg->intensities.assign(point_size, std::numeric_limits<float>::quiet_NaN());
+
+                        }
                     }
                 }
             }
@@ -892,9 +913,12 @@ namespace lslidar_ch_driver {
                 // getFPGA_GPSTimeStamp(difop_packet);
                 if (difop_packet->data[0] == 0xa5 && difop_packet->data[1] == 0xff && difop_packet->data[2] == 0x00 &&
                     difop_packet->data[3] == 0x5a) {
-                    if (difop_packet->data[44] == 0x00) {   //gps授时
+                    is_update_difop_packet = true;
+                    if (difop_packet->data[44] == 0x00) {
+                        //gps授时
                         time_service_mode = "gps";
-                    } else if (difop_packet->data[44] == 0x01) { //ptp授时
+                    } else if (difop_packet->data[44] == 0x01) {
+                        //ptp授时
                         time_service_mode = "gptp";
                     }
 
@@ -927,7 +951,7 @@ namespace lslidar_ch_driver {
                         angle3 = angle3 > 32767 ? (angle3 - 65536) : angle3;
                         this->prism_angle[3] = angle3 * 0.01;
                         //ROS_INFO("3aa=%f",prism_angle[3]);
-                        if (lidar_type == "ch128x1" || lidar_type == "ch128s1") {
+                        if (lidar_type == "ch128x1" || lidar_type == "ch128s1" || lidar_type == "cx128s2") {
                             for (int i = 0; i < 128; i++) {
                                 // sinTheta_2[i] = sin((i % 4) * (-0.17) * M_PI / 180);
                                 if (fabs(this->prism_angle[0]) < 1e-6 && fabs(this->prism_angle[1]) < 1e-6 &&
@@ -951,7 +975,7 @@ namespace lslidar_ch_driver {
                                     cos_theta_1[i] = cos(big_angle[i / 4] * DEG_TO_RAD);
                                 }
 
-                                if (lidar_type == "ch128s1") {
+                                if (lidar_type == "ch128s1" || lidar_type == "cx128s2") {
                                     // 左边
                                     if (i / 4 % 2 == 0) {
                                         sin_theta_1[i] = sin((big_angle_ch128s1[i / 4] + prism_offset) * DEG_TO_RAD);

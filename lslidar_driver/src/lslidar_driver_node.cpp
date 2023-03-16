@@ -6,6 +6,7 @@ volatile sig_atomic_t flag = 1;
 
 static void my_handler(int sig) {
     flag = 0;
+    rclcpp::shutdown();
 }
 
 int main(int argc, char **argv) {
