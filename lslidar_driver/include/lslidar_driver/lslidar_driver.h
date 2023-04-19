@@ -81,6 +81,13 @@ namespace lslidar_ch_driver {
             5, 6, 7, 8, 9, 10, 11, 12
     };
 
+    static const double big_angle_cx126s3[42] = {
+            -12.0,-11.4,-10.8,-10.2,-9.6,-9.0,-8.4,-7.8,-7.2,-6.6,-6.0,-5.4,-4.8,-4.2,
+            -3.6,-3.0,-2.4,-1.8,-1.2,-0.6,0.0,0.6,1.2,1.8,2.4,3.0,3.6,4.2,4.8,5.4,6.0,
+            6.6,7.2,7.8,8.4,9.0,9.6,10.2,10.8,11.4,12.0,12.6
+    };
+
+
     //static const double big_angle_ch16x1[16] = {-1.0,-0.75,-0.50,-0.25,0.0,0.25,0.50,0.75,1.0,1.25,1.50,1.75,2.0,2.25,2.50,2.75};
     static const double big_angle_ch16x1[4] = {-1.0, 0.0, 1.0, 2.0};
 
@@ -262,6 +269,11 @@ namespace lslidar_ch_driver {
         double ch64w_sin_theta_2[128];
         double ch64w_cos_theta_1[128];
         double ch64w_cos_theta_2[128];
+
+        double cx126s3_sin_theta_1[126];
+        double cx126s3_sin_theta_2[126];
+        double cx126s3_cos_theta_1[126];
+        double cx126s3_cos_theta_2[126];
 
         double ch16x1_sin_theta_1[16];
         double ch16x1_sin_theta_2[16];

@@ -217,3 +217,13 @@ Date    : 2023-03-16
 
 
 
+update version:LSLIDAR_CHX1_V1.0.2_230419_ROS2
+
+Modify:  
+
+New compatible cx126s3 radar.
+
+Date    : 2023-04-19
+
+----
+

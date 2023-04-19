@@ -9,7 +9,7 @@
     group_ip: 224.1.1.2
     frame_id: laser_link
     min_range: 0.15
-    max_range: 200.0
+    max_range: 500.0
     packet_rate: 1409.0
     angle_disable_min: 0
     angle_disable_max: 0

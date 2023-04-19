@@ -162,3 +162,10 @@ Date    : 2023-03-16
 
 
 
+Update version : LSLIDAR_CHX1_V1.0.2_230419_ROS2
+
+Modify:  
+
+新增兼容cx128s2 雷达;解析package.xml打印驱动版本。
+
+Date    : 2023-04-19
