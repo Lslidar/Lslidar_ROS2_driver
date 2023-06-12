@@ -100,7 +100,7 @@ Linux/Mac: `git clone -b CH32R_V4.0 https://github.com/Lslidar/Lslidar_ROS2_driv
 
 Windows: `git clone --branch CH32R_V4.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
-### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/CH120.png" width="50px" />CH120_V1.0[Link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/CH120_V1.0)
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/CH120.png" width="50px" />CH120_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/CH120_V1.0)
 
 Linux/Mac: `git clone -b CH120_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
@@ -143,7 +143,7 @@ Linux/Mac: `git clone -b CX128S2_V1.0 https://github.com/Lslidar/Lslidar_ROS2_dr
 
 Windows: `git clone --branch CX128S2_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
-### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/CX126S3.png" width="50px" />CX126S3_V1.0 [Link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/CX126S3_V1.0)
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/CX126S3.png" width="50px" />CX126S3_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/CX126S3_V1.0)
 
 Linux/Mac: `git clone -b CX126S3_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
