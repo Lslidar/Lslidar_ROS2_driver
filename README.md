@@ -100,6 +100,12 @@ Linux/Mac: `git clone -b CH32R_V4.0 https://github.com/Lslidar/Lslidar_ROS2_driv
 
 Windows: `git clone --branch CH32R_V4.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/CH120.png" width="50px" />CH120_V1.0[Link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/CH120_V1.0)
+
+Linux/Mac: `git clone -b CH120_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+Windows: `git clone --branch CH120_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
 ### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/CH128X1.png" width="50px" />CH16X1_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/CH16X1_V1.0)
 
 Linux/Mac: `git clone -b CH16X1_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
