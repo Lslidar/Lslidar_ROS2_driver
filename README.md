@@ -50,11 +50,11 @@ Linux/Mac: `git clone -b LS128/180/400S2_V1.0 https://github.com/Lslidar/Lslidar
 
 Windows: `git clone --branch LS128/180/400S2_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
-### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/C16-V3.0.png" width="50px" />C16_V2.6/2.8/3.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/C16_V2.6/2.8/3.0)
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/C16-V3.0.png" width="50px" />C16_V3.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/C16_V3.0)
 
-Linux/Mac: `git clone -b C16_V2.6/2.8/3.0 https://github.com/Lslidar/Lslidar_ROS1_driver.git`
+Linux/Mac: `git clone -b C16_V3.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
-Windows: `git clone --branch C16_V2.6/2.8/3.0 https://github.com/Lslidar/Lslidar_ROS1_driver.git`
+Windows: `git clone --branch C16_V3.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
 ### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/C16-V3.0.png" width="50px" />C32_V2.6/2.8/3.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/C32_V2.6/2.8/3.0)
 
