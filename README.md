@@ -48,7 +48,7 @@ Windows: `git clone --branch LS128/180/400S1_V1.0 https://github.com/Lslidar/Lsl
 Linux/Mac: `git clone -b LS128/180/320/400S2_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
 Windows: `git clone --branch LS128/180/320/400S2_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
-### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/LS180S1.png" width="50px" />LS144/180/320/400S3_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/LS144/180/320/400S3_V1.0)
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/LS180S3.png" width="50px" />LS144/180/320/400S3_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/LS144/180/320/400S3_V1.0)
 
 Linux/Mac: `git clone -b LS144/180/320/400S3_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
