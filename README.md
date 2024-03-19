@@ -32,7 +32,7 @@ git init
 
 ## Clone Lidar's related documents/repository
 
-_**Operation Instructions:** To access the operation intructions, please click on the blue "link" next to the title of Lidar and read through the "README.md" file in the repository._
+_**Operation Instructions:** To access the operation instructions, please click on the blue "Link" next to the title of Lidar and read through the "README.md" file in the repository._
 
 _**Clone:** To clone each Lidar's repository, please copy and paste the corresponding code in the terminal_
 
@@ -43,12 +43,16 @@ Linux/Mac: `git clone -b LS128/180/400S1_V1.0 https://github.com/Lslidar/Lslidar
 Windows: `git clone --branch LS128/180/400S1_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
 
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/LS128S2.png" width="50px" />LS128/180/320/400S2_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/LS128/180/320/400S2_V1.0)
 
-### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/LS128S2.png" width="50px" />LS128/180/400S2_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/LS128/180/400S2_V1.0)
+Linux/Mac: `git clone -b LS128/180/320/400S2_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
-Linux/Mac: `git clone -b LS128/180/400S2_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+Windows: `git clone --branch LS128/180/320/400S2_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/LS180S1.png" width="50px" />LS144/180/320/400S3_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/LS144/180/320/400S3_V1.0)
 
-Windows: `git clone --branch LS128/180/400S2_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+Linux/Mac: `git clone -b LS144/180/320/400S3_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+Windows: `git clone --branch LS144/180/320/400S3_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
 ### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/C16-V3.0.png" width="50px" />C16_V3.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/C16_V3.0)
 
