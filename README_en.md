@@ -1,7 +1,7 @@
-# LSLIDAR_CHX1_V1.0.0_221116_ROS2
+# LSLIDAR_CHX1_V1.0.3_240621_ROS2
 
 ## 1.Introduction
-​		LSLIDAR_CHX1_V1.0.0_221116_ROS2 is the lidar ros driver in linux environment, which is suitable for ch16x1/ch64w/ch128x1/ch128s1/cx128s2 lidar. The program has  tested under ubuntu18.04 ros dashing , ubuntu18.04 ros eloquent,ubuntu 20.04 ros foxy , ubuntu 20.04 ros galactic and ubuntu22.04 ros humble.
+​		LSLIDAR_CHX1_V1.0.3_240621_ROS2 is the lidar ros driver in linux environment, which is suitable for CX1S3,CX6S3,CH16X1,CH64W,CB64S1-A,CH128X1,CH128S1,CX126S3,CX128S2,CH256 lidar. The program has  tested under ubuntu18.04 ros dashing , ubuntu18.04 ros eloquent,ubuntu 20.04 ros foxy , ubuntu 20.04 ros galactic and ubuntu22.04 ros humble.
 
 ## 2.Dependencies
 
@@ -32,8 +32,9 @@ sudo apt-get install ros-$ROS_DISTRO-pcl-ros ros-$ROS_DISTRO-pluginlib  ros-$ROS
 
 ~~~bash
 sudo apt-get install libpcap-dev
-sudo apt-get install libboost${BOOST_VERSION}-dev   #Select the appropriate version
 ~~~
+
+
 
 ## 3.Compile & Run
 
@@ -48,95 +49,59 @@ Copy the whole lidar ROS driver directory into ROS workspace, i.e "~/lidar_ws/sr
 ~~~bash
 cd ~/lidar_ws
 colcon build
-source install/setup.bash
 ~~~
+
+
 
 ### 3.2 Run
-
-run with single ch16x1 lidar:
-
-~~~bash
-ros2 launch lslidar_driver lslidar_ch16x1_launch.py
-~~~
-
-run with double ch16x1 lidar:
-
-~~~bash
-ros2 launch lslidar_driver lslidar_ch16x1_double_launch.py
-~~~
-
-
-
-run with single ch64w lidar:
-
-~~~bash
-ros2 launch lslidar_driver lslidar_ch64w_launch.py
-~~~
-
-run with double ch64w lidar:
-
-~~~bash
-ros2 launch lslidar_driver lslidar_ch64w_double_launch.py
-~~~
-
-
-
-run with single ch128x1 lidar:
-
-~~~bash
-ros2 launch lslidar_driver lslidar_ch128x1_launch.py
-~~~
-
-run with double ch128x1 lidar:
-
-~~~bash
-ros2 launch lslidar_driver lslidar_ch128x1_double_launch.py
-~~~
-
-
 
 run with single ch128s1 lidar:
 
 ~~~bash
-ros2 launch lslidar_driver lslidar_ch128s1_launch.py
+source install/setup.bash
+ros2 launch lslidar_ch_driver lslidar_ch_launch.py
+ros2 launch lslidar_ch_driver lslidar_ch_rviz_launch.py		# Load RVIZ2
 ~~~
 
 run with double ch128s1 lidar:
 
 ~~~bash
-ros2 launch lslidar_driver lslidar_ch128s1_double_launch.py
+source install/setup.bash
+ros2 launch lslidar_ch_driver lslidar_double_launch.py 
 ~~~
 
 
 
 ## 4. Introduction to parameters
 
-The content of the lslidar_c32.yaml file is as follows, and the meaning of each parameter is shown in the notes.
+The content of the lslidar_ch.yaml file is as follows, and the meaning of each parameter is shown in the notes.
 
 ~~~bash
 /ch16x1/lslidar_driver_node:
   ros__parameters:
-    device_ip: 192.168.1.200        #lidar ip
-    lidar_type: ch16x1                 # lidar type: ch16x1/ch64w/ch128x1/ch128s1
-    msop_port: 2368                 #Main data Stream Output Protocol packet port
-    difop_port: 2369                #Device Information Output Protocol packet port
-    pcl_type: false                 #pointcloud type，false: xyzirt,true:xyzi
-    add_multicast: false                    # Whether to add multicast
-    group_ip: 224.1.1.2                     #multicast ip
+  	lidar_type: CX128S2             # lidar type  CX1S3/CX6S3/CH16X1/CH64W/CB64S1-A/CH128X1/CH128S1/CX126S3/CX128S2/CH256
+    device_ip: 192.168.1.200        # lidar ip
+    msop_port: 2368                 # Main data Stream Output Protocol packet port
+    difop_port: 2369                # Device Information Output Protocol packet port
+    add_multicast: false            # Whether to add multicast
+    group_ip: 224.1.1.2             # multicast ip
+    use_time_service: true          # Whether gps time synchronization
+    min_range: 0.3                  # Unit: m. The minimum value of the lidar blind area, points smaller than this value are filtered
+    max_range: 200.0                # Unit: m. The maximum value of the lidar blind area, points smaller than this value are filtered
+    packet_rate: 1409.0             # Number of packets played per second when playing pcap
+    scan_start_angle: 3000          # The minimum angle for radar scanning, points smaller than this value will be driven to filter. Unit: 0.01 °   64 lidar changed to 0
+    scan_end_angle: 15000           # The maximum angle scanned by the radar, points greater than this value will be driven for filtering. Unit: 0.01 °   64 lidar changed to 18000
     frame_id: laser_link            # lidar point cloud coordinate system name
-    min_range: 0.3                  #Unit: m. The minimum value of the lidar blind area, points smaller than this value are filtered
-    max_range: 200.0                #Unit: m. The maximum value of the lidar blind area, points smaller than this value are filtered
-    packet_rate: 1409.0             #Number of packets played per second when playing pcap
-    angle_disable_min: 0                    #lidar clipping angle start value ，range [0,18000]
-    angle_disable_max: 0                    #lidar clipping angle end value ，range [0,18000]
-    topic_name: lslidar_point_cloud         #point cloud topic name, can be modified
-    horizontal_angle_resolution: 0.2     #10Hz:0.2  20Hz:0.4 5Hz: 0.1
-    use_time_service: true                # Whether gps time synchronization
-    echo_num: 0                          #Only valid in double echo mode, 0 means release of all point clouds, 1 means release of the first echo point cloud, and 2 means release of the second echo point cloud
-    scan_num: 16                            #laserscan line number
-    publish_scan: false                     #Whether to publish the scan
-    #pcap: /home/chris/Documents/leishen/gps.pcap                        #Uncomment to read the data from the pcap file, and add the comment to read the data from the lidar
+    topic_name: lslidar_point_cloud   # point cloud topic name, can be modified
+    echo_num: 0                       # Only valid in double echo mode, 0 means release of all point clouds, 1 means release of the first echo point cloud, and 2 means release of the second echo point cloud
+    publish_scan: false               # Whether to publish the scan
+    channel_num: 16                   # laserscan line number
+    horizontal_angle_resolution: 0.2  # 10Hz:0.2  20Hz:0.4 5Hz: 0.1
+    packet_rate: 9826.0               # loading of PCAP packets, number of PCAP packets per second
+    #pcap: /home/leishen/lidar.pcap   # Uncomment to read the data from the pcap file, and add the comment to read the data from the lidar
 ~~~
+
+
 
 ### Multicast mode:
 
@@ -164,28 +129,29 @@ The content of the lslidar_c32.yaml file is as follows, and the meaning of each 
 
   ~~~xml
   // uncomment
-  pcap: xxx.pcap  // xxx.pcap is changed to the copied pcap file name
+  pcap: /home/leishen/lidar.pcap   // lidar.pcap is changed to the copied pcap file name
   ~~~
 
 
 
 ###  pcl point cloud type:
 
-- Modify the following parameters of the launch file
+- Custom point cloud type, which references the definition in the file of
 
-  ~~~xml
-  pcl_type: false      # pointcloud type，false: xyzirt,true:xyzi
-  ~~~
-
-- The default false is the custom point cloud type, which references the definition in the file of
-
-  lslidar_driver/include/lslidar_driver.h
-
-  Change it to true, which is the own type of pcl:
+  /include/lslidar_ch_driver/lslidar_driver.h
 
   ~~~c++
-  pcl::PointCloud<pcl::PointXYZI>
+  lslidar_ch_driver::PointXYZIRT,
+                      (float, x, x)
+                      (float, y, y)	
+                      (float, z, z)
+                      (float, intensity, intensity)
+                      (std::uint8_t, ring, ring)
+                      (float, time, time))
   ~~~
+
+
+
 
 ## FAQ
 
@@ -224,6 +190,24 @@ Modify:
 New compatible cx126s3 radar.
 
 Date    : 2023-04-19
+
+----
+
+
+
+Update version : LSLIDAR_CHX1_V1.0.3_240621_ROS2
+
+Modify:  
+
+​			1. Merge feature packages
+
+​			2.Optimize the code to reduce CPU usage.
+
+​			3.Horizontal angle calculation for the new CX128S2 lidar.
+
+​			4.Added compatibility with CX1S3, CX6S3, and CB64S1-A lidars.
+
+Date    : 2024-06-21
 
 ----
 

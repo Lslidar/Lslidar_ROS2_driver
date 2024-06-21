@@ -1,0 +1,21 @@
+/CH_left/lslidar_ch_driver_node:
+  ros__parameters:
+    lidar_type: CX128S2                 # 雷达类型  CX1S3/CX6S3/CH16X1/CH64W/CB64S1-A/CH128X1/CH128S1/CX126S3/CX128S2/CH256
+    device_ip: 192.168.1.200            # 雷达IP
+    msop_port: 2368                     # 雷达目的数据端口
+    difop_port: 2369                    # 雷达目的设备端口
+    add_multicast: false                # 雷达是否为组播模式
+    group_ip: 224.1.1.2                 # 组播IP
+    use_time_service: true              # 雷达是否使用GPS/PTP/NTP授时
+    min_range: 0.20                     # 雷达扫描最小距离,小于此值的点将被驱动过滤
+    max_range: 500.0                    # 雷达扫描最大距离,大于此值的点将被驱动过滤
+    scan_start_angle: 3000              # 雷达扫描最小角度,小于此值的点将被驱动过滤 单位: 0.01°   64雷达改为0
+    scan_end_angle: 15000               # 雷达扫描最大角度,大于此值的点将被驱动过滤 单位: 0.01°   64雷达改为18000
+    frame_id: laser_link                # 雷达点云帧ID
+    topic_name: lslidar_point_cloud     # 雷达点云话题名称
+    echo_num: 0                         # 仅双回波模式下有效，0表示发布所有点云，1表示发布第一次回波点云，2表示发布第二次回波点云
+    publish_scan: false                 # 驱动是否发布laserscan
+    channel_num: 8                      # 发布laserscan的线号
+    horizontal_angle_resolution: 0.2    # 10Hz:0.2  20Hz:0.4  5Hz: 0.1
+    packet_rate: 9826.0                 # 离线加载PCAP包,每秒PCAP包数
+    #pcap: /home/ls/data/xxx.pcap       # PCAP包路径，加载PCAP包时打开此注释
