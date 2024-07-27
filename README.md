@@ -159,11 +159,11 @@ Linux/Mac: `git clone -b HS1_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver
 
 Windows: `git clone --branch HS1_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
-### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/M10P.png" width="50px" />M10_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/M10_V1.0)
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/M10P.png" width="50px" />M10/M10-PHY_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/M10/M10-PHY_V1.0)
 
-Linux/Mac: `git clone -b M10_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+Linux/Mac: `git clone -b M10/M10-PHY_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
-Windows: `git clone --branch M10_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+Windows: `git clone --branch M10/M10-PHY_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
 ### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/M10P.png" width="50px" />M10P/N10P [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/M10P/N10P)
 
