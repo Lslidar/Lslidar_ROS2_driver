@@ -1,4 +1,4 @@
-<img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/%E7%94%BB%E6%9D%BF%201%404x-100(1).jpg" width="1200px" />
+<img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/Products.png" width="1200px" />
 
 # Instructions
 
