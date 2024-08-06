@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>lslidar_msgs</name>
+  <version>3.0.1</version>
+  <description>ROS message definitions for C32 LIDARs.</description>
+  <url>http://www.ros.org/wiki/lidar_c32</url>
+  <maintainer email="yutongyan@lidar.com">Yutong</maintainer>
+  <author>Yutong</author>
+  <license>BSD</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+
+  <build_depend>builtin_interfaces</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <exec_depend>builtin_interfaces</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+
+  <depend>std_msgs</depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
