@@ -1,0 +1,3 @@
+string destination_ip
+---
+bool result
