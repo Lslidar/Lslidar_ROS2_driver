@@ -1,0 +1,23 @@
+/cx_front/lslidar_driver_node:
+  ros__parameters:
+    packet_rate: 1695.0
+    device_ip: 192.168.1.203  #雷达ip
+    msop_port: 2374           #雷达目的数据端口
+    difop_port: 2375          #雷达目的设备端口
+    pcl_type: false           #点云类型 true: xyzi
+    add_multicast: false      #雷达是否使用组播模式 true: 使用组播模式 
+    group_ip: 224.1.1.2       #组播ip
+    use_time_service: false   #雷达是否使用外部授时(GPS PTP NTP) true: 使用外部授时
+    min_range: 0.15           #雷达扫描最小距离(小于此值的点会被过滤)
+    max_range: 200.0          #雷达扫描最大距离(大于此值的点会被过滤)
+    angle_disable_min: 0      #雷达扫描最小角度裁剪 单位 0.01°
+    angle_disable_max: 0      #雷达扫描最大角度裁剪 单位 0.01°
+    distance_unit: 0.4
+    horizontal_angle_resolution: 0.18     #10Hz:0.18  20Hz:0.36 5Hz: 0.09
+    frame_id: laser_link      #点云帧id
+    topic_name: lslidar_point_cloud #点云话题名称
+    publish_scan: false       #是否发布 laserscan话题
+    scan_num: 8               #laserscan线号
+    coordinate_opt: false     #点云0度角对应方向  true: x轴正方向
+    #pcap: /home/ls/Downloads/xxx.pcap   #pcap包路径，离线解析pcap包时打开此注释
+                        
