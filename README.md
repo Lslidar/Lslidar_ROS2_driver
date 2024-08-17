@@ -14,7 +14,7 @@ Ubuntu 20.04 ROS2 FOXY
 
 [Ubuntu](http://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html)
 
-_*Before starting this tutorial, please complete the installation. This tutotial assumes that Ubuntu is being used._
+_*Before starting this tutorial, please complete the installation. This tutorial assumes that Ubuntu is being used._
 
 ### Create a ROS workspace
 
@@ -23,7 +23,7 @@ _*Before starting this tutorial, please complete the installation. This tutotial
 ### Install Git and initialize it
 
 1. [Install Git](https://github.com/git-guides/install-git)
-2. Go into the destinated file via terminal, type **git init** to initialize git.
+2. Go into the destinated file via terminal, and type **git init** to initialize git.
 
 ```
 cd <your_work_space>
@@ -36,23 +36,23 @@ _**Operation Instructions:** To access the operation instructions, please click 
 
 _**Clone:** To clone each Lidar's repository, please copy and paste the corresponding code in the terminal_
 
-### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/LS180S1.png" width="50px" />LS128/180/400S1_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/LS128/180/400S1_V1.0)
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/LS180S1.png" width="50px" />LS-S1_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/LS-S1_V1.0)
 
-Linux/Mac: `git clone -b LS128/180/400S1_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+Linux/Mac: `git clone -b LS-S1_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
-Windows: `git clone --branch LS128/180/400S1_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+Windows: `git clone --branch LS-S1_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
 
-### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/LS128S2.png" width="50px" />LS128/180/320/400S2_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/LS128/180/320/400S2_V1.0)
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/LS128S2.png" width="50px" />LS-S2_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/LS-S2_V1.0)
 
-Linux/Mac: `git clone -b LS128/180/320/400S2_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+Linux/Mac: `git clone -b LS-S2_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
-Windows: `git clone --branch LS128/180/320/400S2_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+Windows: `git clone --branch LS-S2_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 ### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/LS180S3.png" width="50px" />LS144/180/320/400S3_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/LS144/180/320/400S3_V1.0)
 
-Linux/Mac: `git clone -b LS144/180/320/400S3_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+Linux/Mac: `git clone -b LS-S3_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
-Windows: `git clone --branch LS144/180/320/400S3_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+Windows: `git clone --branch LS-S3_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
 ### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/C16-V3.0.png" width="50px" />C16_V3.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/C16_V3.0)
 
@@ -203,10 +203,10 @@ Windows: `git clone --branch N401-P_V5.0 https://github.com/Lslidar/Lslidar_ROS2
 FAQ
 ----
 
-Techinical Support
+Technical Support
 ----
 
-Any more question please commit an issue
+Any more questions please commit an issue
 
 you can contact support@lslidar.com
 or Enter our live chat window
