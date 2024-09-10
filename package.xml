@@ -19,7 +19,6 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>rclpy</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_depend>rslidar_input</build_depend>
   <build_depend>libpcl-all-dev</build_depend>
   <build_depend>libpcap</build_depend>
 
