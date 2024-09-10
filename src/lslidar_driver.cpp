@@ -528,7 +528,7 @@ namespace lslidar_driver {
                     }
                     packetType = false;
                     point_cloud_xyzirt_ = std::move(point_cloud_xyzirt_bak_);
-                    point_cloud_xyzirt_bak_ = boost::make_shared<pcl::PointCloud<VPoint>>();
+                    point_cloud_xyzirt_bak_ = pcl::make_shared<pcl::PointCloud<VPoint>>();
                 } else {
                     {
                         std::unique_lock<std::mutex> lock(pc_lock);
@@ -536,8 +536,8 @@ namespace lslidar_driver {
                     }
                     threadPool_->enqueue([&]() { publishPointCloud(); });
                     packetType = false;
-                    point_cloud_xyzirt_ = boost::make_shared<pcl::PointCloud<VPoint>>();
-                    point_cloud_xyzirt_bak_ = boost::make_shared<pcl::PointCloud<VPoint>>();
+                    point_cloud_xyzirt_ = pcl::make_shared<pcl::PointCloud<VPoint>>();
+                    point_cloud_xyzirt_bak_ = pcl::make_shared<pcl::PointCloud<VPoint>>();
                 }
             }
         }
@@ -615,7 +615,7 @@ namespace lslidar_driver {
                     }
                     packetType = false;
                     point_cloud_xyzirt_ = std::move(point_cloud_xyzirt_bak_);
-                    point_cloud_xyzirt_bak_ = boost::make_shared<pcl::PointCloud<VPoint>>();
+                    point_cloud_xyzirt_bak_ = pcl::make_shared<pcl::PointCloud<VPoint>>();
                 } else {
                     {
                         std::unique_lock<std::mutex> lock(pc_lock);
@@ -623,8 +623,8 @@ namespace lslidar_driver {
                     }
                     threadPool_->enqueue([&]() { publishPointCloud(); });
                     packetType = false;
-                    point_cloud_xyzirt_ = boost::make_shared<pcl::PointCloud<VPoint>>();
-                    point_cloud_xyzirt_bak_ = boost::make_shared<pcl::PointCloud<VPoint>>();
+                    point_cloud_xyzirt_ = pcl::make_shared<pcl::PointCloud<VPoint>>();
+                    point_cloud_xyzirt_bak_ = pcl::make_shared<pcl::PointCloud<VPoint>>();
                 }
             }
         }
