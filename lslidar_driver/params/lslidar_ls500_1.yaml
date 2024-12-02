@@ -1,0 +1,18 @@
+/ls500_left/lslidar_driver_node:
+  ros__parameters:
+    device_ip: 192.168.1.200		      # 雷达ip
+    msop_port: 2368                   # 雷达目的数据端口
+    difop_port: 2369                  # 雷达目的设备宽口
+    frame_id: laser_link              # 坐标id
+    is_add_frame_: true		            # 是否开启叠帧
+    add_multicast: false              # 是否开启组播模式
+    group_ip: 224.1.1.2               # 组播ip地址
+    time_synchronization: false       # 雷达是否使用gps或ptp授时，使用改为true
+    min_range: 0.3			              # 距离裁剪最小值
+    max_range: 500.0			            # 距离裁剪最大值
+    scan_start_angle: -60             # 起始角度，范围[-60,60]
+    scan_end_angle: 60                # 结束角度，范围[-60,60]
+    topic_name: lslidar_point_cloud   # 点云话题名称，可修改
+    Vertical_angle_compensation: -28.0
+    packet_rate: 29815.0              # pcap包每秒包数
+    #pcap: /home/ls/Ls500.pcap                        #pcap包路径，加载pcap包时打开此注释      #pcap包路径，加载pcap包时打开此注释
