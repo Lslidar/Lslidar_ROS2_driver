@@ -54,6 +54,12 @@ Linux/Mac: `git clone -b LS-S3_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driv
 
 Windows: `git clone --branch LS-S3_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
 
+### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/LS500W1.png" width="50px" />LS500W1_V1.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/LS500W1_V1.0)
+
+Linux/Mac: `git clone -b LS500W1_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
+Windows: `git clone --branch LS500W1_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
+
 ### <img src="https://github.com/Lslidar/Lslidar_ROS1_driver/blob/master/image/C16-V3.0.png" width="50px" />C16_V3.0 [link](https://github.com/Lslidar/Lslidar_ROS2_driver/tree/C16_V3.0)
 
 Linux/Mac: `git clone -b C16_V3.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git`
