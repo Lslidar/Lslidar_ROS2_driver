@@ -94,6 +94,8 @@ namespace lslidar_ch_driver {
         std::unordered_map<std::string, std::function<void(Firing&)>> coordinateConverters;
 
         std::function<void(Firing&)> currentConverter;
+
+        std::function<void(const lslidar_ch_driver::msg::LslidarPacket::UniquePtr&)> packetProcess;
         
         std::unique_ptr <ThreadPool> threadPool_;
     
@@ -109,6 +111,12 @@ namespace lslidar_ch_driver {
         void publishLaserScan();
 
         void publishPointCloud();
+
+        void packetProcessSingle(const lslidar_ch_driver::msg::LslidarPacket::UniquePtr &packet);
+        
+        void packetProcessDouble(const lslidar_ch_driver::msg::LslidarPacket::UniquePtr &packet);
+
+        bool getLidarEcho(void);
 
         void convertCoordinate(Firing &data) {currentConverter(data);}
 
@@ -160,6 +168,7 @@ namespace lslidar_ch_driver {
         //socket Parameters
         int msop_udp_port;
         int difop_udp_port;
+        int echo_byte = 1211;
 
         std::shared_ptr<Input> msop_input_;
         std::shared_ptr<Input> difop_input_;
@@ -181,6 +190,7 @@ namespace lslidar_ch_driver {
         bool publish_laserscan;
         bool gain_prism_angle;
         bool is_update_difop_packet;
+        bool lidarEcho = false;
         std::string dump_file;
         double prism_angle[4];
         double prism_offset;
@@ -216,6 +226,7 @@ namespace lslidar_ch_driver {
         double packet_timestamp;
         double last_packet_timestamp;
         double packet_interval_time;
+        double point_interval_time;
         double point_cloud_timestamp;
         unsigned char packetTimeStamp[10];
         struct tm cur_time;
@@ -267,8 +278,6 @@ namespace lslidar_ch_driver {
         double cos_xita_F;
         double sin_xita_F;
         double add_distance;
-
-        int c;
     };
 
     typedef LslidarChDriver::LslidarChDriverPtr LslidarChDriverPtr;

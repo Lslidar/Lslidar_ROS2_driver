@@ -97,6 +97,7 @@ namespace lslidar_ch_driver {
         socklen_t sender_address_len = sizeof(sender_address);
 
         int retval = poll(fds, 1, POLL_TIMEOUT);
+        if (!flag) return -2;
         if (retval <= 0)  // poll() timeout?
         {
             if (retval == 0) {

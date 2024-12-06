@@ -7,7 +7,6 @@ static void my_handler([[maybe_unused]] int sig) {
     LS_ERROR << "Signal received, ending process." << LS_END;
     flag = 0;
     rclcpp::shutdown();
-    exit(0);
 }
 
 int main(int argc, char **argv) {
