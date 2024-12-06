@@ -17,7 +17,7 @@ set(libpcap_LIBRARIES -lpcap)
 
 find_package(angles REQUIRED)
 find_package(PCL REQUIRED)
-find_package(ament_index_cpp REQUIRED)
+#find_package(ament_index_cpp REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -43,7 +43,7 @@ rosidl_generate_interfaces(lslidar_soild
 
 add_executable(lslidar_ch_driver_node src/lslidar_driver_node.cpp src/lslidar_driver.cpp src/input.cpp)
 target_link_libraries(lslidar_ch_driver_node ${rclcpp_LIBRARIES}  ${libpcap_LIBRARIES})
-ament_target_dependencies(lslidar_ch_driver_node rclcpp std_msgs sensor_msgs pcl_conversions ament_index_cpp)
+ament_target_dependencies(lslidar_ch_driver_node rclcpp std_msgs sensor_msgs pcl_conversions)#ament_index_cpp
 
 install(DIRECTORY launch params rviz_cfg
         DESTINATION share/${PROJECT_NAME})
