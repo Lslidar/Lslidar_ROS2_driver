@@ -21,7 +21,6 @@
   <build_depend>rslidar_input</build_depend>
   <build_depend>libpcl-all-dev</build_depend>
   <build_depend>libpcap</build_depend>
-  <build_depend>ament_index_cpp</build_depend>
 
   <exec_depend>angles</exec_depend>
   <exec_depend>pluginlib</exec_depend>
@@ -33,7 +32,6 @@
   <exec_depend>libpcl-all</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>libpcap</exec_depend>
-  <exec_depend>ament_index_cpp</exec_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
 
   <member_of_group>rosidl_interface_packages</member_of_group>
