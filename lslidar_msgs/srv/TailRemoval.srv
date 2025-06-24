@@ -1,0 +1,4 @@
+# 机械式 去拖尾 新版本: 0-10   旧版本: 0-4
+uint8 tail_removal
+---
+bool result

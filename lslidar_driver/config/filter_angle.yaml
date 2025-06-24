@@ -1,0 +1,102 @@
+# 机械式单独线号角度裁剪   线号从下到上，小到大排序  可在 RViz 中使用 Select 框选点云确认对应线号
+# 单位为0.01° 不包含边界  360° = 36000  不进行裁剪  min = 0      max = 0
+# 默认RViz y轴对应0°     过0°进行裁剪:  270°~90°   min = -9000  max = 9000
+#                      不过0°进行裁剪: 90°~270°   min = 9000   max = 27000
+
+angle:
+  -
+    disable_min: 0   # 0号线  
+    disable_max: 0    
+  -                  
+    disable_min: 0   # 1
+    disable_max: 0
+  -
+    disable_min: 0   # 2
+    disable_max: 0
+  -
+    disable_min: 0   # 3
+    disable_max: 0
+  -
+    disable_min: 0   # 4
+    disable_max: 0
+  -
+    disable_min: 0   # 5
+    disable_max: 0
+  -
+    disable_min: 0   # 6
+    disable_max: 0
+  -
+    disable_min: 0   # 7
+    disable_max: 0
+  -
+    disable_min: 0   # 8
+    disable_max: 0 
+  -
+    disable_min: 0   # 9
+    disable_max: 0
+  -
+    disable_min: 0   # 10
+    disable_max: 0
+  -
+    disable_min: 0   # 11
+    disable_max: 0
+  -
+    disable_min: 0   # 12
+    disable_max: 0
+  -
+    disable_min: 0   # 13
+    disable_max: 0
+  -
+    disable_min: 0   # 14
+    disable_max: 0
+  -
+    disable_min: 0   # 15
+    disable_max: 0
+  -
+    disable_min: 0   # 16
+    disable_max: 0
+  -
+    disable_min: 0   # 17
+    disable_max: 0
+  -
+    disable_min: 0   # 18
+    disable_max: 0
+  -
+    disable_min: 0   # 19
+    disable_max: 0
+  -
+    disable_min: 0   # 20
+    disable_max: 0
+  -
+    disable_min: 0   # 21
+    disable_max: 0
+  -
+    disable_min: 0   # 22
+    disable_max: 0
+  -
+    disable_min: 0   # 23
+    disable_max: 0
+  -
+    disable_min: 0   # 24
+    disable_max: 0
+  -
+    disable_min: 0   # 25
+    disable_max: 0
+  -
+    disable_min: 0   # 26
+    disable_max: 0
+  -
+    disable_min: 0   # 27
+    disable_max: 0
+  -
+    disable_min: 0   # 28
+    disable_max: 0
+  -
+    disable_min: 0   # 29
+    disable_max: 0
+  -
+    disable_min: 0   # 30
+    disable_max: 0
+  -
+    disable_min: 0   # 31
+    disable_max: 0

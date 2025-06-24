@@ -1,0 +1,4 @@
+# 1550 待机模式  0: 正常模式   1: 待机模式
+uint8 standby_mode
+---
+bool result

@@ -1,0 +1,4 @@
+# 机械式 905 频率设置: 5 10 20
+uint8 motor_speed
+---
+bool result

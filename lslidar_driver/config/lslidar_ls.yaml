@@ -1,0 +1,32 @@
+ls:  
+  lslidar_driver_node:
+    ros__parameters:
+      lidar_type: "LS"            # 雷达型号
+      device_ip: "192.168.1.200"  # 雷达IP地址
+      msop_port: 2368             # 雷达目的数据端口
+      difop_port: 2369            # 雷达目的设备端口
+      use_time_service: false     # 雷达是否使用授时(GPS PTP NTP)
+      packet_rate: 15000.0        # PCAP文件回放速率，离线解析PCAP数据时使用
+      add_multicast: false        # 雷达是否开启组播
+      group_ip: "224.1.1.2"       # 组播IP地址
+      packet_loss: false          # 是否开启丢包检测
+
+      # 点云处理参数
+      pcl_type: false             # 点云类型  true: xyzi
+      frame_id: "laser_link"      # 坐标系名称
+      pointcloud_topic: "lslidar_point_cloud"  # 点云话题名
+      min_range: 0.15             # 雷达扫描最小距离 小于该值的点将被过滤(m)
+      max_range: 500.0            # 雷达扫描最大距离 大于该值的点将被过滤(m)
+      scan_start_angle: -6000     # 雷达扫描最小角度 填整数 单位: 0.01°
+      scan_end_angle: 6000        # 雷达扫描最大角度 填整数 单位: 0.01°
+
+      # 点云坐标系转换参数
+      is_pretreatment: false      # 预处理开关 
+      x_offset: 0.0               # X轴平移(m)
+      y_offset: 0.0               # Y轴平移(m)
+      z_offset: 0.0               # Z轴平移(m)
+      roll: 0.0                   # X轴旋转(rad)
+      pitch: 0.0                  # Y轴旋转(rad)
+      yaw: 0.0                    # Z轴旋转(rad)
+
+      # pcap: "xxx.pcap"          # PCAP文件路径，离线解析PCAP数据时打开注释

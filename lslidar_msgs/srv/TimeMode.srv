@@ -1,0 +1,10 @@
+# 0: GPS
+# 1: PTP L2
+# 2: NTP
+# 3: PTP UDPv4
+# 4: E2E L2
+# 5: E2E UDPv4
+uint8 time_mode
+string ntp_ip
+---
+bool result

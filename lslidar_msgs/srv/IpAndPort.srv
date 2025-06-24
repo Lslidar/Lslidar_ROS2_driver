@@ -1,0 +1,7 @@
+#设置ip 端口  四个参数必填，默认参数则使用network_setup.yaml文件中的参数
+string lidar_ip
+string destination_ip
+uint16 data_port
+uint16 dev_port
+---
+bool result

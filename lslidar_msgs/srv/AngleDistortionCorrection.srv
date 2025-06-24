@@ -1,0 +1,4 @@
+#1550 角度畸变矫正 开启次功能可降低驱动算力     0: 关闭  1: 开启 
+uint8 angle_distortion_correction
+---
+bool result
