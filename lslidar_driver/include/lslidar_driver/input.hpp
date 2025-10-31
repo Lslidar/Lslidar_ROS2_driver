@@ -32,10 +32,11 @@
 #include <fcntl.h>
 #include <sys/file.h>
 #include <signal.h>
-#include <cmath>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/time_reference.hpp>
-#include "lslidar_log.hpp"
+#include <math.h>
+
+#include "lslidar_driver/lslidar_log.hpp"
 #include "lslidar_msgs/msg/lslidar_packet.hpp"
 
 
@@ -60,10 +61,13 @@ namespace lslidar_driver {
         }
 
         virtual int getPacket(lslidar_msgs::msg::LslidarPacket::UniquePtr &pkt) = 0;
+
+        virtual ssize_t sendPacket(const unsigned char *data, size_t length) = 0;
         
     protected:
         rclcpp::Node::SharedPtr private_nh_;
         uint16_t port_;
+        uint16_t difop_port_;
         std::string devip_str_;
         int cur_rpm_;
         int return_mode_;
@@ -82,6 +86,8 @@ namespace lslidar_driver {
 
         virtual int getPacket(lslidar_msgs::msg::LslidarPacket::UniquePtr &pkt);
 
+        virtual ssize_t sendPacket(const unsigned char *data, size_t length);
+
     private:
         int sockfd_;
         in_addr devip_;
@@ -94,14 +100,16 @@ namespace lslidar_driver {
     class InputPCAP : public Input {
     public:
         InputPCAP(rclcpp::Node::SharedPtr private_nh, uint16_t port = MSOP_DATA_PORT_NUMBER, int packet_size = 1212, double packet_rate = 0.0,
-                  std::string filename = "", bool read_once = false, bool read_fast = false, double repeat_delay = 0.0);
+                  std::string filename = "");
 
         virtual ~InputPCAP();
 
         virtual int getPacket(lslidar_msgs::msg::LslidarPacket::UniquePtr &pkt);
 
+        virtual ssize_t sendPacket(const unsigned char *data, size_t length);
+
     private:
-        rclcpp::Rate packet_rate_;  // 使用ROS2的Rate类
+        rclcpp::Rate packet_rate_;
         std::string filename_;
         pcap_t *pcap_;
         bpf_program pcap_packet_filter_;
@@ -110,6 +118,7 @@ namespace lslidar_driver {
         bool read_once_;
         bool read_fast_;
         double repeat_delay_;
+        bool first = true;
     };
 }
 

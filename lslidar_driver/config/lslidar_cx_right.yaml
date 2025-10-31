@@ -1,19 +1,22 @@
 cx_right:  
   lslidar_driver_node:
     ros__parameters:
-      lidar_type: "CX"            # 雷达型号
+      lidar_type: "CX"            # 雷达类型
       device_ip: "192.168.1.201"  # 雷达IP地址
       msop_port: 2370             # 雷达目的数据端口
       difop_port: 2371            # 雷达目的设备端口
-      use_time_service: false     # 雷达是否使用授时(GPS PTP NTP)
       packet_rate: 1695.0         # PCAP文件回放速率，离线解析PCAP数据时使用
       add_multicast: false        # 雷达是否开启组播
       group_ip: "224.1.1.2"       # 组播IP地址
-
+      #pcap: "/home/ls/Desktop/lidar_data.pcap"          # PCAP文件路径，离线解析PCAP数据时打开注释
+      
       # 点云处理参数
       pcl_type: false             # 点云类型  true: xyzi
       frame_id: "laser_link"      # 坐标系名称
       pointcloud_topic: "lslidar_point_cloud"  # 点云话题名
+      use_time_service: false     # 雷达是否使用授时(GPS PTP NTP)
+      use_first_point_time: false # true: 使用每帧第一个点的时间做为点云时间
+      use_absolute_time: false    # 点时间格式 true: 使用绝对时间  注意与点云头文件中USE_ABSOLUTE_TIME保持一致
       min_range: 0.15             # 雷达扫描最小距离 小于该值的点将被过滤(m)
       max_range: 200.0            # 雷达扫描最大距离 大于该值的点将被过滤(m)
       angle_disable_min: 0        # 雷达扫描最小裁剪角度 填整数 单位: 0.01°
@@ -31,5 +34,44 @@ cx_right:
       roll: 0.0                   # X轴旋转(rad)
       pitch: 0.0                  # Y轴旋转(rad)
       yaw: 0.0                    # Z轴旋转(rad)
+      
+      is_MatrixTransformation: false  # 预处理开关 true 使用以下两个(4*4)矩阵进行转换(若只转换一次，可将其中一个删除)
+      transform_main:
+        [
+          0.3514713644981384,
+          0.3227383494377136,
+          0.878810465335846,
+          1.250789999961853,
+          -0.17116132378578186,
+          0.9450311660766602,
+          -0.27860331535339355,
+          -0.3601331412792206,
+          -0.9204192757606506,
+          -0.05249723792076111,
+          0.38739171624183655,
+          1.9063990116119385,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+        ]
+      transform_imu:
+        [
+          0.999537,
+          -0.030429,
+          0.00027,
+          -1.047623,
+          0.030413,
+          0.999231,
+          0.024782,
+          5.966497,
+          -0.001024,
+          -0.024763,
+          0.999693,
+          0.638128,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+        ]
 
-      # pcap: "xxx.pcap"          # PCAP文件路径，离线解析PCAP数据时打开注释

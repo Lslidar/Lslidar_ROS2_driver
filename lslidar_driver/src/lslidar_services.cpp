@@ -218,7 +218,7 @@ namespace lslidar_driver {
             res->result = false;
             return false;
         }
-
+    
         if (req->motor_speed == 5) {
             ucwp_data[8] = 0x01;
             ucwp_data[9] = 0x2c;
@@ -228,6 +228,18 @@ namespace lslidar_driver {
         } else if (req->motor_speed == 20) {
             ucwp_data[8] = 0x04;
             ucwp_data[9] = 0xB0;
+        } else if (req->motor_speed == 30) {
+            ucwp_data[8] = 0x07;
+            ucwp_data[9] = 0x08;
+        } else if (req->motor_speed == 40) {
+            ucwp_data[8] = 0x09;
+            ucwp_data[9] = 0x60;
+        } else if (req->motor_speed == 50) {
+            ucwp_data[8] = 0x0B;
+            ucwp_data[9] = 0xB8;
+        } else if (req->motor_speed == 60) {
+            ucwp_data[8] = 0x0E;
+            ucwp_data[9] = 0x10;
         } else {
             LS_ERROR << "Parameter error, please check the input parameters." << LS_END;
             res->result = false;

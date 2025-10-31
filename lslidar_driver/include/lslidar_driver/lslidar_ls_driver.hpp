@@ -26,9 +26,6 @@
 #include <chrono>
 #include <deque>
 #include <std_msgs/msg/int64.hpp>
-#include <std_msgs/msg/int8.hpp>
-#include <std_msgs/msg/string.hpp>
-#include <pcl_conversions/pcl_conversions.h>
 
 namespace lslidar_driver {
     /** Special Defines for LSCh support **/
@@ -36,20 +33,36 @@ namespace lslidar_driver {
     constexpr int POINTS_PER_PACKET_DOUBLE_ECHO = 1188;       // modify
     constexpr double SINGLE_ECHO = 0.006711409;
     constexpr double DOUBLE_ECHO = 0.01010101;
-
     static float g_fDistanceAcc = 0.001f;
-    static float m_offset = 6.37f;
+
+    // LSS3
+    constexpr int CHANNEL_SHIFT_S3 = 6;
+    constexpr int SYMBOL_SHIFT_S3 = 5;
+    constexpr int ANGLE_V_MASK_S3 = 0xc000;
+    constexpr int ANGLE_H_MASK_S3 = 0x3f;
+
+    constexpr float m_offset_s3 = 6.37f;
     constexpr double cos30 = cos(DEG2RAD(30));
     constexpr double sin30 = sin(DEG2RAD(30));
-    constexpr double cos60 = cos(DEG2RAD(60));
     constexpr double sin60 = sin(DEG2RAD(60));
+
+    // LSS4
+    constexpr int CHANNEL_SHIFT_S4 = 5;
+    constexpr int SYMBOL_SHIFT_S4 = 4;
+    constexpr int ANGLE_V_MASK_S4 = 0xE000;
+    constexpr int ANGLE_H_MASK_S4 = 0x1f;
+
+    constexpr float m_offset_s4 = 5.30f;
+    constexpr double cos45 = cos(DEG2RAD(45));
+    constexpr double sin45 = sin(DEG2RAD(45));
+    constexpr double sin90 = sin(DEG2RAD(90));
 
     struct FiringLS {
         double vertical_angle;
         double azimuth;
         double distance;
         float intensity;
-        float time;
+        double time;
         int channel_number;
     };
 
@@ -81,16 +94,14 @@ namespace lslidar_driver {
 
         void publishPointCloudNew();
 
-        static void setPacketHeader(unsigned char *config_data);
-
-        bool sendPacketTolidar(unsigned char *config_data) const;
-
         std::function<void(const lslidar_msgs::msg::LslidarPacket::UniquePtr&)> lslidarPacketProcess;
 
         void packetProcessSingle(const lslidar_msgs::msg::LslidarPacket::UniquePtr& packet);
         
         void packetProcessDouble(const lslidar_msgs::msg::LslidarPacket::UniquePtr& packet);
 
+        void prepareAndPublishPointCloud(bool& packetType);
+        
         void checkPacketLoss(const lslidar_msgs::msg::LslidarPacket::UniquePtr &msg, int data_offset, int byte_count);
 
         void updateTimeOffsets(double point_interval_time, int point_size);
@@ -103,16 +114,15 @@ namespace lslidar_driver {
         typedef std::shared_ptr<const LslidarLsDriver> LslidarLsDriverConstPtr;
 
     public:
-        in_addr lidar_ip{};
         double prism_angle[4]{};
         
-        rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr packet_loss_pub;
-        rclcpp::Publisher<std_msgs::msg::String>::SharedPtr fault_code_pub;
+        rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr packet_loss_pub_;
+        rclcpp::Publisher<std_msgs::msg::String>::SharedPtr fault_code_pub_;
 
-        rclcpp::Service<lslidar_msgs::srv::AngleDistortionCorrection>::SharedPtr angle_distortion_correction_service;
-        rclcpp::Service<lslidar_msgs::srv::FrameRate>::SharedPtr frame_rate_service;
-        rclcpp::Service<lslidar_msgs::srv::InvalidData>::SharedPtr invalid_data_service;
-        rclcpp::Service<lslidar_msgs::srv::StandbyMode>::SharedPtr standby_mode_service;
+        rclcpp::Service<lslidar_msgs::srv::AngleDistortionCorrection>::SharedPtr angle_distortion_correction_service_;
+        rclcpp::Service<lslidar_msgs::srv::FrameRate>::SharedPtr frame_rate_service_;
+        rclcpp::Service<lslidar_msgs::srv::InvalidData>::SharedPtr invalid_data_service_;
+        rclcpp::Service<lslidar_msgs::srv::StandbyMode>::SharedPtr standby_mode_service_;
 
         uint64_t pointcloudTimeStamp{};
         unsigned char packetTimeStamp[10]{};
@@ -123,26 +133,38 @@ namespace lslidar_driver {
         double last_packet_time;
         double packet_interval_time;
         double point_cloud_timestamp;
+        double first_two_point_cloud_time;
         
+        int frame_count;
         int return_mode;
         int scan_start_angle{};
         int scan_end_angle{};
-        double g_fAngleAcc_V;
-        bool is_add_frame_;
-        bool packet_loss;
+        
         std::mutex pc_mutex_;
         
         int64_t last_packet_number_;
         int64_t tmp_packet_number_;
         int64_t total_packet_loss_;
-        int frame_count;
+        
         int m_horizontal_point = -1;
+        bool packet_loss;
         bool get_ms06_param;
+        std::atomic<bool> is_add_frame_;
 
+        int channel_number_shift;  // iChannelNumber 的位移位数（6 或 5）
+        int symbol_shift;          // iSymmbol 的位移位数（5 或 4）
+        int angle_v_mask;          // fAngle_V 的掩码值（0xc000 或 0xE000）
+        int angle_h_mask;          // iAngle_Hight 的掩码值（0x3f 或 0x1f）
+
+        float m_offset{};
+        double cos1{};
+        double sin1{};
+        double sin2{};
         double cos_table[36000]{};
         double sin_table[36000]{};
-        double cos_mirror_angle[4]{};
-        double sin_mirror_angle[4]{};
+        double cos_mirror_angle[8]{};
+        double sin_mirror_angle[8]{};
+        double g_fAngleAcc_V;
 
         pcl::PointCloud<PointXYZIRT>::Ptr point_cloud_xyzirt_;
         pcl::PointCloud<PointXYZIRT>::Ptr point_cloud_xyzirt_bak_;

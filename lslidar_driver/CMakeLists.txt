@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(lslidar_driver VERSION 5.0.9)
+project(lslidar_driver VERSION 5.1.1)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -36,9 +36,11 @@ add_definitions("-D${PROJECT_NAME}_VERSION=\"${${PROJECT_NAME}_VERSION}\"")
 
 add_library(lslidar_driver
   src/input.cpp
+  src/lsiosr.cpp
   src/lslidar_ch_driver.cpp
   src/lslidar_cx_driver.cpp
   src/lslidar_ls_driver.cpp
+  src/lslidar_x10_driver.cpp
   src/lslidar_services.cpp
   src/lslidar_device_info.cpp
 )

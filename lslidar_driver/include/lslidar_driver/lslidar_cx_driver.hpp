@@ -191,7 +191,7 @@ namespace lslidar_driver {
 
         void pointcloudToLaserscan(const sensor_msgs::msg::PointCloud2 &cloud_msg, sensor_msgs::msg::LaserScan &output_scan);
 
-        bool determineLidarType();
+        bool determineLidarModel();
 
     public:
         int scan_num{};
@@ -205,7 +205,6 @@ namespace lslidar_driver {
         int return_mode;
         int fpga_type{};
 
-        in_addr lidar_ip{};
         std::string filter_angle_file;
 
         bool pcl_type{};
@@ -221,10 +220,10 @@ namespace lslidar_driver {
 
         std::mutex pointcloud_lock;
 
-        rclcpp::Service<lslidar_msgs::srv::MotorControl>::SharedPtr motor_control_service;
-        rclcpp::Service<lslidar_msgs::srv::PowerControl>::SharedPtr power_control_service;
-        rclcpp::Service<lslidar_msgs::srv::RfdRemoval>::SharedPtr rfd_removal_service;
-        rclcpp::Service<lslidar_msgs::srv::TailRemoval>::SharedPtr tail_removal_service;
+        rclcpp::Service<lslidar_msgs::srv::MotorControl>::SharedPtr motor_control_service_;
+        rclcpp::Service<lslidar_msgs::srv::PowerControl>::SharedPtr power_control_service_;
+        rclcpp::Service<lslidar_msgs::srv::RfdRemoval>::SharedPtr rfd_removal_service_;
+        rclcpp::Service<lslidar_msgs::srv::TailRemoval>::SharedPtr tail_removal_service_;
 
         unsigned char packetTimeStamp[10];
         struct tm cur_time{};

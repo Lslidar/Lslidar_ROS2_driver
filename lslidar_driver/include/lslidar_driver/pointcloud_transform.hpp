@@ -35,6 +35,9 @@ public:
     template <typename PointCloudType>
     void applyTransform(PointCloudType& point_cloud) const;
 
+    template <typename PointCloudType>
+	void applyTransform_2(PointCloudType& point_cloud, Eigen::Matrix4f tTransform) const;
+
 private:
     void initializeTransformMatrix();
 
@@ -85,4 +88,8 @@ inline void PointCloudTransform::applyTransform(PointCloudType& point_cloud) con
     pcl::transformPointCloud(point_cloud, point_cloud, transform_matrix_);
 }
 
+template <typename PointCloudType>
+inline void PointCloudTransform::applyTransform_2(PointCloudType& point_cloud, Eigen::Matrix4f tTransform) const {
+    pcl::transformPointCloud(point_cloud, point_cloud, tTransform);
+}
 #endif  // POINTCLOUD_TRANSFORM_HPP

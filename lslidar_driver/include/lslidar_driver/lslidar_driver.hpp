@@ -22,17 +22,20 @@
 #define DEG_TO_RAD 0.017453f
 #define RAD_TO_DEG 57.29577f
 
+#include <functional>
 #include <rclcpp/rclcpp.hpp> 
+#include <std_msgs/msg/int8.hpp>
 #include <std_msgs/msg/float64.hpp>
 #include <std_msgs/msg/string.hpp> 
 #include <sensor_msgs/msg/point_cloud2.hpp> 
 #include <sensor_msgs/msg/laser_scan.hpp> 
+#include <pcl_conversions/pcl_conversions.h>
 
-#include "input.hpp"
-#include "ThreadPool.h"
-#include "lslidar_device_info.hpp"
-#include "lslidar_pointcloud.hpp"
-#include "pointcloud_transform.hpp"
+#include "lslidar_driver/input.hpp"
+#include "lslidar_driver/ThreadPool.h"
+#include "lslidar_driver/lslidar_device_info.hpp"
+#include "lslidar_driver/lslidar_pointcloud.hpp"
+#include "lslidar_driver/pointcloud_transform.hpp"
 #include "lslidar_driver/lslidar_services.hpp"
 #include "lslidar_msgs/msg/lslidar_information.hpp" 
 
@@ -60,16 +63,16 @@ namespace lslidar_driver {
     protected:
         rclcpp::Node::SharedPtr node_;
         
-        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_pub;
-        rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_pub;
-        rclcpp::Publisher<lslidar_msgs::msg::LslidarInformation>::SharedPtr lidar_info_pub;
-        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr time_pub;
+        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_pub_;
+        rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_pub_;
+        rclcpp::Publisher<lslidar_msgs::msg::LslidarInformation>::SharedPtr lidar_info_pub_;
+        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr time_pub_;
         
-        rclcpp::Service<lslidar_msgs::srv::IpAndPort>::SharedPtr network_config_service;
-        rclcpp::Service<lslidar_msgs::srv::MotorSpeed>::SharedPtr motor_speed_service;
-        rclcpp::Service<lslidar_msgs::srv::TimeMode>::SharedPtr time_mode_service;
+        rclcpp::Service<lslidar_msgs::srv::IpAndPort>::SharedPtr network_config_service_;
+        rclcpp::Service<lslidar_msgs::srv::MotorSpeed>::SharedPtr motor_speed_service_;
+        rclcpp::Service<lslidar_msgs::srv::TimeMode>::SharedPtr time_mode_service_;
         
-        lslidar_msgs::msg::LslidarInformation::SharedPtr lidar_info_data;
+        lslidar_msgs::msg::LslidarInformation::SharedPtr lidar_info_data_;
         PointCloudTransform pointcloud_transform_;
 
         std::shared_ptr<Input> msop_input_;
@@ -81,6 +84,7 @@ namespace lslidar_driver {
         std::atomic<bool> is_get_difop_{false};
 
         std::string lidar_type;
+        std::string lidar_model;
         std::string lidar_ip_string;
         std::string group_ip_string;
         std::string dump_file;
@@ -89,11 +93,20 @@ namespace lslidar_driver {
         
         bool add_multicast;
         bool use_time_service;
+        bool use_first_point_time;
+        bool use_absolute_time;
         bool is_pretreatment;
+
+        bool is_MatrixTransformation;       //是否进行输入矩阵转换
+        Eigen::Matrix4f MatrixTransform_result;             //最终的矩阵
 
         int msop_udp_port;
         int difop_udp_port;
+        int point_time_offset;
+        int relative_time_offset;
 
+        double point_cloud_time;
+        double last_point_cloud_time = 0.0;
         double packet_rate;
         double min_range;
         double max_range;

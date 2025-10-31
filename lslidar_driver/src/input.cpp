@@ -39,6 +39,8 @@ namespace lslidar_driver {
         private_nh_->get_parameter("device_ip", devip_str_);
         private_nh_->get_parameter("add_multicast", add_multicast);
         private_nh_->get_parameter("group_ip", group_ip);
+        private_nh_->get_parameter("difop_port", difop_port_);
+
         // if (!devip_str_.empty())
         //     LS_INFO << "Only accepting packets from IP address: " << devip_str_ << LS_END;
     }
@@ -122,16 +124,12 @@ namespace lslidar_driver {
         if (retval > 0 && (fds[0].revents & POLLIN)) {
             ssize_t nbytes = recvfrom(sockfd_, &pkt->data[0], packet_size_, 0, (sockaddr *)&sender_address, &sender_address_len);
 
-            if (nbytes == packet_size_ || nbytes == 1206) {
-                if (sender_address.sin_addr.s_addr == devip_.s_addr) {
-                    return 0; 
-                } else {
-                    LS_WARN << "Lidar IP parameter mismatch. Received IP: " << inet_ntoa(sender_address.sin_addr) 
-                            << ". Please reset lidar IP in the launch file." << LS_END;
-                    return 1;
-                }
+            if (sender_address.sin_addr.s_addr == devip_.s_addr) {
+                return nbytes; 
             } else {
-                return 1;
+                LS_WARN << "Lidar IP parameter mismatch. Received IP: " << inet_ntoa(sender_address.sin_addr) 
+                        << ". Please reset lidar IP in the launch file." << LS_END;
+                return 0;
             }
         } else {
             if (retval == 0) {  
@@ -141,7 +139,7 @@ namespace lslidar_driver {
                 sprintf(bufTime, "%d-%d-%d %d:%d:%d", curTm->tm_year + 1900, curTm->tm_mon + 1,
                         curTm->tm_mday, curTm->tm_hour, curTm->tm_min, curTm->tm_sec);
                 LS_WARN << bufTime << "  Lidar poll() timeout, port:" << port_ << LS_END;
-                return 1; 
+                return 0; 
             }
 
             if (retval < 0) { 
@@ -157,7 +155,31 @@ namespace lslidar_driver {
             }
         }
 
-        return 1;
+        return 0;
+    }
+
+    ssize_t InputSocket::sendPacket(const unsigned char *data, size_t length) {
+        if (data == nullptr || length <= 0) {
+            LS_ERROR << "Invalid input data or length." << LS_END;
+            return -1;
+        }
+
+        sockaddr_in server_sai;
+        server_sai.sin_family = AF_INET;
+        server_sai.sin_port = htons(difop_port_);
+        server_sai.sin_addr.s_addr = inet_addr(devip_str_.c_str());
+
+        ssize_t nbytes = sendto(sockfd_, data, length, 0, (struct sockaddr *)&server_sai, sizeof(server_sai));
+
+        if (nbytes < 0) {
+            LS_ERROR << "Data packet sending failed: " << strerror(errno) << LS_END;
+        } else if (nbytes != length) {
+            LS_WARN << "Partial data sent:" << nbytes << "/" << length << " bytes." << LS_END;
+        } else {
+            LS_INFO << "Successfully sent " <<  nbytes << " bytes!" << LS_END;
+        }
+
+        return nbytes;
     }
 
 ////////////////////////////////////////////////////////////////////////
@@ -171,13 +193,11 @@ namespace lslidar_driver {
    *  @param packet_rate expected device packet frequency (Hz)
    *  @param filename PCAP dump file name
    */
-    InputPCAP::InputPCAP(rclcpp::Node::SharedPtr private_nh, uint16_t port, int packet_size, double packet_rate,
-                         std::string filename,
-                         bool read_once, bool read_fast, double repeat_delay)
-            : Input(private_nh, port, packet_size), packet_rate_(packet_rate), filename_(filename) {
+    InputPCAP::InputPCAP(rclcpp::Node::SharedPtr private_nh, uint16_t port, int packet_size, double packet_rate, std::string filename)
+             : Input(private_nh, port, packet_size), packet_rate_(packet_rate), filename_(filename) {
         pcap_ = NULL;
         empty_ = true;
-
+        
         private_nh_->get_parameter("read_once", read_once_);
         private_nh_->get_parameter("read_fast", read_fast_);
         private_nh_->get_parameter("repeat_delay", repeat_delay_);
@@ -212,7 +232,7 @@ namespace lslidar_driver {
     int InputPCAP::getPacket(lslidar_msgs::msg::LslidarPacket::UniquePtr &pkt) {
         struct pcap_pkthdr *header;
         const u_char *pkt_data;
-
+        
         while (flag == 1) {
             int res;
             if ((res = pcap_next_ex(pcap_, &header, &pkt_data)) >= 0) {
@@ -224,15 +244,15 @@ namespace lslidar_driver {
 
                 memcpy(&pkt->data[0], pkt_data + 42, packet_size_);
 
-                if (pkt->data[0] == 0xA5 && pkt->data[1] == 0xFF && pkt->data[2] == 0x00 &&
-                    pkt->data[3] == 0x5A) {
-                    int rpm = (pkt->data[8] << 8) | pkt->data[9];
-                    // LS_PCAP << "Lidar RPM: " << rpm << LS_END;
-                }
+                // if (pkt->data[0] == 0xA5 && pkt->data[1] == 0xFF && pkt->data[2] == 0x00 &&
+                //     pkt->data[3] == 0x5A) {
+                //     int rpm = (pkt->data[8] << 8) | pkt->data[9];
+                //     LS_PCAP << "Lidar RPM: " << rpm << LS_END;
+                // }
 
                 pkt->stamp = rclcpp::Clock().now();  
                 empty_ = false;
-                return 0;  
+                return packet_size_;  
             }
 
             if (empty_) {
@@ -262,6 +282,11 @@ namespace lslidar_driver {
         }
 
         return 0;
+    }
+
+    ssize_t InputPCAP::sendPacket(const unsigned char *data, size_t length) {
+        LS_WARN << "Offline settings are not currently supported." << LS_END;
+        return -1;
     }
 
 } //namespace

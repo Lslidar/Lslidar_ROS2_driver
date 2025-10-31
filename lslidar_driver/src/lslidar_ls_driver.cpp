@@ -44,12 +44,14 @@ namespace lslidar_driver {
         node_->declare_parameter<double>("packet_rate", 15000.0);
         node_->declare_parameter<std::string>("frame_id", "laser_link");
         node_->declare_parameter<bool>("add_multicast", false);
-        node_->declare_parameter<std::string>("group_ip", "234.2.3.2");
+        node_->declare_parameter<std::string>("group_ip", "224.1.1.2");
         node_->declare_parameter<bool>("use_time_service", false);
-        node_->declare_parameter<std::string>("device_ip", "192.168.1.200");
+        node_->declare_parameter<std::string>("device_ip", "");
         node_->declare_parameter<int>("msop_port", (int) MSOP_DATA_PORT_NUMBER);
         node_->declare_parameter<int>("difop_port", (int) DIFOP_DATA_PORT_NUMBER);
         node_->declare_parameter<std::string>("pointcloud_topic", "lslidar_point_cloud");
+        node_->declare_parameter<bool>("use_first_point_time", false);
+        node_->declare_parameter<bool>("use_absolute_time", false);
         node_->declare_parameter<double>("min_range", 0.3);
         node_->declare_parameter<double>("max_range", 150.0);
         node_->declare_parameter<bool>("is_pretreatment", false);
@@ -59,10 +61,20 @@ namespace lslidar_driver {
         node_->declare_parameter<double>("roll", 0.0);
         node_->declare_parameter<double>("pitch", 0.0);
         node_->declare_parameter<double>("yaw", 0.0);
+        node_->declare_parameter<bool>("read_once", false);
+        node_->declare_parameter<bool>("read_fast", false);
+        node_->declare_parameter<double>("repeat_delay", 0.0);
 
         node_->declare_parameter<int>("scan_start_angle", -6000);
         node_->declare_parameter<int>("scan_end_angle", 6000);
         node_->declare_parameter<bool>("packet_loss", false);
+        node_->declare_parameter<std::string>("lidar_model", "LSS3");
+        bool is_add_frame_tmp = false;
+        node_->declare_parameter<bool>("is_add_frame", false);
+
+        node_->declare_parameter<bool>("is_MatrixTransformation", false);
+        node_->declare_parameter<std::vector<double>>("transform_main", std::vector<double>());
+        node_->declare_parameter<std::vector<double>>("transform_imu", std::vector<double>());
 
         node_->get_parameter("pcap", dump_file);
         node_->get_parameter("packet_rate", packet_rate);
@@ -74,6 +86,8 @@ namespace lslidar_driver {
         node_->get_parameter("msop_port", msop_udp_port);
         node_->get_parameter("difop_port", difop_udp_port);
         node_->get_parameter("pointcloud_topic", pointcloud_topic);
+        node_->get_parameter("use_first_point_time", use_first_point_time);
+        node_->get_parameter("use_absolute_time", use_absolute_time);
         node_->get_parameter("min_range", min_range);
         node_->get_parameter("max_range", max_range);
         node_->get_parameter("is_pretreatment", is_pretreatment);
@@ -87,6 +101,36 @@ namespace lslidar_driver {
         node_->get_parameter("scan_start_angle", scan_start_angle);
         node_->get_parameter("scan_end_angle", scan_end_angle);
         node_->get_parameter("packet_loss", packet_loss);
+        node_->get_parameter("lidar_model", lidar_model);
+        node_->get_parameter("is_add_frame", is_add_frame_tmp);
+
+        is_add_frame_.store(is_add_frame_tmp); 
+
+        // 获取转换矩阵
+        node_->get_parameter("is_MatrixTransformation", is_MatrixTransformation);
+        auto tTransform_main = node_->get_parameter("transform_main").as_double_array();
+        auto tTransform_imu = node_->get_parameter("transform_imu").as_double_array();
+
+        Eigen::Matrix4f MatrixTransform_main;
+        Eigen::Matrix4f MatrixTransform_imu;
+
+        for (int i = 0; i < 16; ++i) {
+            if (!tTransform_main.empty()) MatrixTransform_main(i / 4, i % 4) = tTransform_main[i];
+            if (!tTransform_imu.empty()) MatrixTransform_imu(i / 4, i % 4) = tTransform_imu[i];
+        }
+
+        if ((!tTransform_main.empty()) && (!tTransform_imu.empty()))
+        {
+            MatrixTransform_result = MatrixTransform_main * MatrixTransform_imu;
+        }
+        else if ((tTransform_main.empty()) && (!tTransform_imu.empty()))
+        {
+            MatrixTransform_result = MatrixTransform_imu;
+        }
+        else
+        {
+            MatrixTransform_result = MatrixTransform_main;
+        }
 
         return true;
     }
@@ -95,14 +139,17 @@ namespace lslidar_driver {
         LS_PARAM << "pcap file: " << dump_file << LS_END;
         LS_PARAM << "packet rate: " << packet_rate << LS_END;
         LS_PARAM << "add multicast: " << std::boolalpha << add_multicast << LS_END;
-        LS_PARAM << "use time service: " << std::boolalpha << use_time_service << LS_END;
-        LS_PARAM << "pointcloud topic: " << pointcloud_topic << LS_END;
         LS_PARAM << "frame id: " << frame_id << LS_END;
+        LS_PARAM << "pointcloud topic: " << pointcloud_topic << LS_END;
+        LS_PARAM << "use time service: " << std::boolalpha << use_time_service << LS_END;
+        LS_PARAM << "use first point time: " << std::boolalpha << use_first_point_time << LS_END;
+        LS_PARAM << "use absolute time: " << std::boolalpha << use_absolute_time << LS_END;
         LS_PARAM << "min range: " << min_range << LS_END;
         LS_PARAM << "max range: "<< max_range << LS_END;
         LS_PARAM << "scan start angle: " << scan_start_angle << LS_END;
         LS_PARAM << "scan end angle: " << scan_end_angle << LS_END;
         LS_PARAM << "packet loss check: " << std::boolalpha << packet_loss << LS_END;
+        LS_PARAM << "is add frame: " << std::boolalpha << is_add_frame_ << LS_END;
 
         if (is_pretreatment) {
             LS_MSG << "x offset: " << x_offset << LS_END;
@@ -120,43 +167,43 @@ namespace lslidar_driver {
     }
 
     bool LslidarLsDriver::createRosIO() {
-        pointcloud_pub = node_->create_publisher<sensor_msgs::msg::PointCloud2>(pointcloud_topic, 10); 
-        fault_code_pub = node_->create_publisher<std_msgs::msg::String>("lslidar_fault_code", 1);
-        lidar_info_pub = node_->create_publisher<lslidar_msgs::msg::LslidarInformation>("lslidar_device_info", 1);
-        if (packet_loss) packet_loss_pub = node_->create_publisher<std_msgs::msg::Int64>("packet_loss", 10);
-        time_pub = node_->create_publisher<std_msgs::msg::Float64>("time_topic", 10);
+        pointcloud_pub_ = node_->create_publisher<sensor_msgs::msg::PointCloud2>(pointcloud_topic, 10); 
+        fault_code_pub_ = node_->create_publisher<std_msgs::msg::String>("lslidar_fault_code", 1);
+        lidar_info_pub_ = node_->create_publisher<lslidar_msgs::msg::LslidarInformation>("lslidar_device_info", 1);
+        if (packet_loss) packet_loss_pub_ = node_->create_publisher<std_msgs::msg::Int64>("packet_loss", 10);
+        time_pub_ = node_->create_publisher<std_msgs::msg::Float64>("time_topic", 10);
 
-        angle_distortion_correction_service = node_->create_service<lslidar_msgs::srv::AngleDistortionCorrection>("angle_distortion_correction",
+        angle_distortion_correction_service_ = node_->create_service<lslidar_msgs::srv::AngleDistortionCorrection>("angle_distortion_correction",
             [this](std::shared_ptr<lslidar_msgs::srv::AngleDistortionCorrection::Request> req,
                    std::shared_ptr<lslidar_msgs::srv::AngleDistortionCorrection::Response> res) {
                 std::dynamic_pointer_cast<LslidarLsServices>(services_)->setAngleDistortionCorrection(req, res);
             });
 
-        network_config_service = node_->create_service<lslidar_msgs::srv::IpAndPort>("network_setup",
+        network_config_service_ = node_->create_service<lslidar_msgs::srv::IpAndPort>("network_setup",
             [this](std::shared_ptr<lslidar_msgs::srv::IpAndPort::Request> req,
                    std::shared_ptr<lslidar_msgs::srv::IpAndPort::Response> res) {
                 std::dynamic_pointer_cast<LslidarLsServices>(services_)->setIpAndPort(req, res);
             });
 
-        time_mode_service = node_->create_service<lslidar_msgs::srv::TimeMode>("time_mode",
+        time_mode_service_ = node_->create_service<lslidar_msgs::srv::TimeMode>("time_mode",
             [this](std::shared_ptr<lslidar_msgs::srv::TimeMode::Request> req,
                    std::shared_ptr<lslidar_msgs::srv::TimeMode::Response> res) {
                 std::dynamic_pointer_cast<LslidarLsServices>(services_)->setTimeMode(req, res);
             });
 
-        frame_rate_service = node_->create_service<lslidar_msgs::srv::FrameRate>("frame_rate",
+        frame_rate_service_ = node_->create_service<lslidar_msgs::srv::FrameRate>("frame_rate",
             [this](std::shared_ptr<lslidar_msgs::srv::FrameRate::Request> req,
                    std::shared_ptr<lslidar_msgs::srv::FrameRate::Response> res) {
                 std::dynamic_pointer_cast<LslidarLsServices>(services_)->setFrameRate(req, res);
             });
 
-        invalid_data_service = node_->create_service<lslidar_msgs::srv::InvalidData>("invalid_data",
+        invalid_data_service_ = node_->create_service<lslidar_msgs::srv::InvalidData>("invalid_data",
             [this](std::shared_ptr<lslidar_msgs::srv::InvalidData::Request> req,
                    std::shared_ptr<lslidar_msgs::srv::InvalidData::Response> res) {
                 std::dynamic_pointer_cast<LslidarLsServices>(services_)->setInvalidData(req, res);
             });
 
-        standby_mode_service = node_->create_service<lslidar_msgs::srv::StandbyMode>("standby_mode",
+        standby_mode_service_ = node_->create_service<lslidar_msgs::srv::StandbyMode>("standby_mode",
             [this](std::shared_ptr<lslidar_msgs::srv::StandbyMode::Request> req,
                    std::shared_ptr<lslidar_msgs::srv::StandbyMode::Response> res) {
                 std::dynamic_pointer_cast<LslidarLsServices>(services_)->setStandbyMode(req, res);
@@ -180,10 +227,12 @@ namespace lslidar_driver {
             i = 0;
         }
         this->pointcloudTimeStamp = 0;
+
+        point_time_offset = use_first_point_time ? 2 : 0;
+        relative_time_offset = use_absolute_time ? 0 : 1;
     }
     
     bool LslidarLsDriver::initialize() {
-        this->initTimeStamp();
         if (!loadParameters()) {
             LS_ERROR << "Cannot load all required ROS parameters..." << LS_END;
             return false;
@@ -201,6 +250,8 @@ namespace lslidar_driver {
             return false;
         }
 
+        this->initTimeStamp();
+
         if (is_pretreatment) {
             pointcloud_transform_.setTransform(x_offset, y_offset, z_offset, roll, pitch, yaw);
         }
@@ -212,10 +263,37 @@ namespace lslidar_driver {
             cos_table[j] = cos(angle);
         }
 
-        double mirror_angle[4] = {1.5, -0.5, 0.5, -1.5};   //摆镜角度   //根据通道不同偏移角度不同
-        for (int i = 0; i < 4; ++i) {
-            cos_mirror_angle[i] = cos(DEG2RAD(mirror_angle[i]));
-            sin_mirror_angle[i] = sin(DEG2RAD(mirror_angle[i]));
+        double mirror_angle_s3[4] = {1.5, -0.5, 0.5, -1.5};   //摆镜角度   //根据通道不同偏移角度不同
+        double mirror_angle_s4[8] = {-2.555, -1.825, -1.095, -0.365, 0.365, 1.095, 1.825, 2.555};
+
+        if (lidar_model == "LSS3") {
+            channel_number_shift = CHANNEL_SHIFT_S3;
+            symbol_shift = SYMBOL_SHIFT_S3;
+            angle_v_mask = ANGLE_V_MASK_S3;
+            angle_h_mask = ANGLE_H_MASK_S3;
+
+            m_offset = m_offset_s3;
+            cos1 = cos30;
+            sin1 = sin30;
+            sin2 = sin60;
+            for (int i = 0; i < 4; ++i) {
+                cos_mirror_angle[i] = cos(DEG2RAD(mirror_angle_s3[i]));
+                sin_mirror_angle[i] = sin(DEG2RAD(mirror_angle_s3[i]));
+            }
+        } else if (lidar_model == "LSS4") {
+            channel_number_shift = CHANNEL_SHIFT_S4;
+            symbol_shift = SYMBOL_SHIFT_S4;
+            angle_v_mask = ANGLE_V_MASK_S4;
+            angle_h_mask = ANGLE_H_MASK_S4;
+
+            m_offset = m_offset_s4;
+            cos1 = cos45;
+            sin1 = sin45;
+            sin2 = sin90;
+            for (int i = 0; i < 8; ++i) {
+                cos_mirror_angle[i] = cos(DEG2RAD(mirror_angle_s4[i]));
+                sin_mirror_angle[i] = sin(DEG2RAD(mirror_angle_s4[i]));
+            }
         }
 
         return true;
@@ -223,17 +301,31 @@ namespace lslidar_driver {
 
     void LslidarLsDriver::difopPoll() {
         lslidar_msgs::msg::LslidarPacket::UniquePtr difop_packet(new lslidar_msgs::msg::LslidarPacket());
+        static bool stack_frames = true;
 
         while (rclcpp::ok()) {
             // keep reading
             int rc = difop_input_->getPacket(difop_packet);
-            if (rc == 0) {
+            if (rc == 1206) {
                 if (difop_packet->data[0] == 0x00 || difop_packet->data[0] == 0xa5) {
                     if (difop_packet->data[1] == 0xff && difop_packet->data[2] == 0x00 &&
                         difop_packet->data[3] == 0x5a) {
 
-                        if (difop_packet->data[231] == 64 || difop_packet->data[231] == 65) {   // ls320 ls400
-                            is_add_frame_ = true;
+                        if (lidar_model == "LSS3" && stack_frames) {
+                            // LS320 LS400
+                            if (difop_packet->data[231] == 64 || difop_packet->data[231] == 65) {   
+                                is_add_frame_.store(true);
+                            }
+
+                            stack_frames = false;
+                        }
+
+                        if (lidar_model == "LSS4") {
+                            short distortion_angle = ((difop_packet->data[238] << 8) + difop_packet->data[239]);
+
+                            if (0xffff != distortion_angle && 0 != distortion_angle) {
+                                m_offset = distortion_angle * 0.01;
+                            }
                         }
 
                         // 服务配置雷达传递设备包
@@ -257,20 +349,20 @@ namespace lslidar_driver {
 
                         auto fault_code_msg = std::make_shared<std_msgs::msg::String>();
                         fault_code_msg->data = oss.str();
-                        fault_code_pub->publish(*fault_code_msg);
+                        fault_code_pub_->publish(*fault_code_msg);
 
                         Information device = device_info_->getDeviceInfo(difop_packet);
 
-                        lidar_info_data = std::make_shared<lslidar_msgs::msg::LslidarInformation>();
-                        lidar_info_data->lidar_ip = device.lidarIp;
-                        lidar_info_data->destination_ip = device.destinationIP;
-                        lidar_info_data->lidar_mac_address = device.lidarMacAddress;
-                        lidar_info_data->msop_port = device.msopPort;
-                        lidar_info_data->difop_port = device.difopPort;
-                        lidar_info_data->lidar_serial_number = device.lidarSerialNumber;
-                        lidar_info_data->fpga_board_2_program = device.secondBoardProgram;
-                        lidar_info_data->fpga_board_3_program = device.thirdBoardProgram;
-                        lidar_info_pub->publish(*lidar_info_data);
+                        lidar_info_data_ = std::make_shared<lslidar_msgs::msg::LslidarInformation>();
+                        lidar_info_data_->lidar_ip = device.lidarIp;
+                        lidar_info_data_->destination_ip = device.destinationIP;
+                        lidar_info_data_->lidar_mac_address = device.lidarMacAddress;
+                        lidar_info_data_->msop_port = device.msopPort;
+                        lidar_info_data_->difop_port = device.difopPort;
+                        lidar_info_data_->lidar_serial_number = device.lidarSerialNumber;
+                        lidar_info_data_->fpga_board_2_program = device.secondBoardProgram;
+                        lidar_info_data_->fpga_board_3_program = device.thirdBoardProgram;
+                        lidar_info_pub_->publish(*lidar_info_data_);
 
                         is_get_difop_.store(true);
                     }
@@ -283,22 +375,23 @@ namespace lslidar_driver {
 
     void LslidarLsDriver::publishPointCloudNew() {
         if (!is_get_difop_.load()) return;
+        
         std::unique_lock<std::mutex> lock(pc_mutex_);
         point_cloud_xyzirt_pub_->header.frame_id = frame_id;
         point_cloud_xyzirt_pub_->height = 1;
 
         if (is_pretreatment) pointcloud_transform_.applyTransform(*point_cloud_xyzirt_pub_);
-
+        if (is_MatrixTransformation) pointcloud_transform_.applyTransform_2(*point_cloud_xyzirt_pub_, MatrixTransform_result);
+        
         auto pc_msg = std::make_shared<sensor_msgs::msg::PointCloud2>();    
         pcl::toROSMsg(*point_cloud_xyzirt_pub_, *pc_msg);
-        point_cloud_timestamp = (point_cloud_timestamp > 2147483647.0) ? (point_cloud_timestamp - 2208988800.0) : point_cloud_timestamp;
-        pc_msg->header.stamp = rclcpp::Time(point_cloud_timestamp * 1000000000LL);
-        pointcloud_pub->publish(*pc_msg);
-        // LS_INFO << "pointcloud size: " << pc_msg->width << LS_END;
+        point_cloud_time = (point_cloud_time > 2147483647.0) ? (point_cloud_time - 2208988800.0) : point_cloud_time;
+        pc_msg->header.stamp = rclcpp::Time(point_cloud_time * 1000000000LL);
+        pointcloud_pub_->publish(*pc_msg);
 
         auto time_msg = std::make_shared<std_msgs::msg::Float64>();
-        time_msg->data = point_cloud_timestamp;
-        time_pub->publish(*time_msg);
+        time_msg->data = point_cloud_time;
+        time_pub_->publish(*time_msg);
     }
 
     int LslidarLsDriver::convertCoordinate(const struct FiringLS &lidardata) {    
@@ -337,11 +430,9 @@ namespace lslidar_driver {
         fAngle_H = lidardata.azimuth;
         fAngle_V = lidardata.vertical_angle;
 
-        //加畸变
         double fSinV_angle = 0;
         double fCosV_angle = 0;
 
-        //振镜偏移角度 = 实际垂直角度 / 2  - 偏移值
         double fGalvanometrtAngle = fAngle_V + m_offset;
 
         if (fGalvanometrtAngle < 0.0) fGalvanometrtAngle += 360.0;
@@ -351,14 +442,14 @@ namespace lslidar_driver {
         int table_index_V = int(fGalvanometrtAngle * 100) % 36000;
         int table_index_H = int(fAngle_H * 100) % 36000;
 
-        double fAngle_R0 = cos30 * cos_mirror_angle[lidardata.channel_number % 4] * cos_table[table_index_V] -
-                           sin_table[table_index_V] * sin_mirror_angle[lidardata.channel_number % 4];
+        double fAngle_R0 = cos1 * cos_mirror_angle[lidardata.channel_number] * cos_table[table_index_V] -
+                           sin_table[table_index_V] * sin_mirror_angle[lidardata.channel_number];
 
-        fSinV_angle = 2 * fAngle_R0 * sin_table[table_index_V] + sin_mirror_angle[lidardata.channel_number % 4];
+        fSinV_angle = 2 * fAngle_R0 * sin_table[table_index_V] + sin_mirror_angle[lidardata.channel_number];
         fCosV_angle = sqrt(1 - pow(fSinV_angle, 2));
 
-        double fSinCite = (2 * fAngle_R0 * cos_table[table_index_V] * sin30 -
-                           cos_mirror_angle[lidardata.channel_number % 4] * sin60) / fCosV_angle;
+        double fSinCite = (2 * fAngle_R0 * cos_table[table_index_V] * sin1 -
+                           cos_mirror_angle[lidardata.channel_number] * sin2) / fCosV_angle;
         double fCosCite = sqrt(1 - pow(fSinCite, 2));
 
         double fSinCite_H = sin_table[table_index_H] * fCosCite + cos_table[table_index_H] * fSinCite;
@@ -387,11 +478,11 @@ namespace lslidar_driver {
     bool LslidarLsDriver::poll() {
         lslidar_msgs::msg::LslidarPacket::UniquePtr packet(new lslidar_msgs::msg::LslidarPacket());
 
-        while (true) {
+        while (rclcpp::ok()) {
             // keep reading until full packet received
             int rc = msop_input_->getPacket(packet);
-            if (rc == 0) break;       // got a full packet?
-            if (rc == 1) continue;    // No full packet, retry
+            if (rc == 1206) break;       // got a full packet?
+            if (rc == 0) continue;    // No full packet, retry
             if (rc < 0) return false; // System-level error, terminate,end of file reached?
         }
 
@@ -435,168 +526,164 @@ namespace lslidar_driver {
         return true;
     }
 
-    void LslidarLsDriver::packetProcessSingle(const lslidar_msgs::msg::LslidarPacket::UniquePtr &msg) {
+    void LslidarLsDriver::packetProcessSingle(const lslidar_msgs::msg::LslidarPacket::UniquePtr& packet) {
         FiringLS lidardata;
         bool packetType = false;
-        if (packet_loss) checkPacketLoss(msg, 1192, 2);
+        if (packet_loss) checkPacketLoss(packet, 1192, 2);
         double point_interval_time = (current_packet_time - last_packet_time) * SINGLE_ECHO;
 
         for (size_t point_idx = 0, point_num = 0; point_idx < POINTS_PER_PACKET_SINGLE_ECHO; point_idx += 8, ++point_num) {
-            if ((msg->data[point_idx] == 0xff) && (msg->data[point_idx + 1] == 0xaa) && (msg->data[point_idx + 2] == 0xbb) && 
-                (msg->data[point_idx + 3] == 0xcc) && (msg->data[point_idx + 4] == 0xdd)) {   // 帧头判断
-                point_cloud_timestamp = last_packet_time + point_interval_time * point_num;
+            if ((packet->data[point_idx] == 0xff) && (packet->data[point_idx + 1] == 0xaa) && 
+                (packet->data[point_idx + 2] == 0xbb) && (packet->data[point_idx + 3] == 0xcc) && 
+                (packet->data[point_idx + 4] == 0xdd)) {   // 帧头判断
+                point_cloud_timestamp = last_packet_time + point_interval_time * (point_num + point_time_offset);
+                point_cloud_time = use_first_point_time 
+                    ? (is_add_frame_.load() ? first_two_point_cloud_time : last_point_cloud_time)
+                    : point_cloud_timestamp;
+
+                first_two_point_cloud_time = last_point_cloud_time;
+                last_point_cloud_time = point_cloud_timestamp;
+
                 packetType = true;
                 frame_count++;
-            } else {    //预计算点的距离
-                double point_distance = ((msg->data[point_idx + 4] << 16) + (msg->data[point_idx + 5] << 8) +
-                                            msg->data[point_idx + 6]) * g_fDistanceAcc;
+            } else {    // 预计算点的距离
+                double point_distance = ((packet->data[point_idx + 4] << 16) + (packet->data[point_idx + 5] << 8) +
+                                          packet->data[point_idx + 6]) * g_fDistanceAcc;
                 if (point_distance < min_range || point_distance > max_range) continue;
                 memset(&lidardata, 0, sizeof(lidardata));
-                //水平角度
-                int fAngle_H = msg->data[point_idx + 1] + (msg->data[point_idx] << 8);
+
+                // 水平角度
+                int fAngle_H = (packet->data[point_idx] << 8) + packet->data[point_idx + 1];
                 if (fAngle_H > 32767) {
                     fAngle_H = (fAngle_H - 65536);
                 }
                 if ((fAngle_H < scan_start_angle) || (fAngle_H > scan_end_angle)) continue;
                 lidardata.azimuth = fAngle_H * 0.01;
-                //垂直角度+通道号
-                int iTempAngle = msg->data[point_idx + 2];
-                int iChannelNumber = iTempAngle >> 6; //左移六位 通道号
-                int iSymmbol = (iTempAngle >> 5) & 0x01; //左移五位 符号位
-                double fAngle_V = 0.0;
-                if (1 == iSymmbol) // 符号位 0：正数 1：负数
-                {
-                    int iAngle_V = msg->data[point_idx + 3] + (msg->data[point_idx + 2] << 8);
 
-                    fAngle_V = iAngle_V | 0xc000;
+                // 垂直角度+通道号
+                int iTempAngle = packet->data[point_idx + 2];
+                int iChannelNumber = iTempAngle >> channel_number_shift;
+                int iSymmbol = (iTempAngle >> symbol_shift) & 0x01;
+                double fAngle_V = 0.0;
+                if (1 == iSymmbol) { // 符号位 0：正数 1：负数
+                    int iAngle_V = (packet->data[point_idx + 2] << 8) + packet->data[point_idx + 3];
+                    fAngle_V = iAngle_V | angle_v_mask;
                     if (fAngle_V > 32767) {
                         fAngle_V = (fAngle_V - 65536);
                     }
                 } else {
-                    int iAngle_Hight = iTempAngle & 0x3f;
-                    fAngle_V = msg->data[point_idx + 3] + (iAngle_Hight << 8);
+                    int iAngle_Hight = iTempAngle & angle_h_mask;
+                    fAngle_V = (iAngle_Hight << 8) + packet->data[point_idx + 3];
                 }
 
                 lidardata.vertical_angle = fAngle_V * g_fAngleAcc_V;
                 lidardata.channel_number = iChannelNumber;
                 lidardata.distance = point_distance;
-                lidardata.intensity = msg->data[point_idx + 7];
-                lidardata.time = last_packet_time + point_interval_time * (point_num + 1) - point_cloud_timestamp;
+                lidardata.intensity = packet->data[point_idx + 7];
+                lidardata.time = last_packet_time + point_interval_time * (point_num + 1) - point_cloud_timestamp  * relative_time_offset;
                 lidarConvertCoordinate(lidardata);  // 计算坐标
             }
 
-            if (packetType) {
-                if (is_add_frame_) {
-                    if (frame_count >= 2) {
-                        {
-                            std::unique_lock<std::mutex> lock(pc_mutex_);
-                            point_cloud_xyzirt_pub_ = std::move(point_cloud_xyzirt_);
-                        }
-                        thread_pool_->enqueue([this]() { publishPointCloudNew(); });
-                    }
-                    packetType = false;
-                    point_cloud_xyzirt_ = std::move(point_cloud_xyzirt_bak_);
-                    point_cloud_xyzirt_bak_.reset(new pcl::PointCloud<VPoint>());
-                } else {
-                    {
-                        std::unique_lock<std::mutex> lock(pc_mutex_);
-                        point_cloud_xyzirt_pub_ = std::move(point_cloud_xyzirt_);
-                    }
-                    thread_pool_->enqueue([this]() { publishPointCloudNew(); });
-                    packetType = false;
-                    point_cloud_xyzirt_.reset(new pcl::PointCloud<VPoint>());
-                    point_cloud_xyzirt_bak_.reset(new pcl::PointCloud<VPoint>());
-                }
-            }
+            prepareAndPublishPointCloud(packetType);
         }
 
         last_packet_time = current_packet_time;
     }
 
-    //双回波数据包解析
-    void LslidarLsDriver::packetProcessDouble(const lslidar_msgs::msg::LslidarPacket::UniquePtr &msg) {
+    void LslidarLsDriver::packetProcessDouble(const lslidar_msgs::msg::LslidarPacket::UniquePtr& packet) {
         FiringLS lidardata;
         bool packetType = false;
-        if (packet_loss) checkPacketLoss(msg, 1188, 6);
+        if (packet_loss) checkPacketLoss(packet, 1188, 6);
         double point_interval_time = (current_packet_time - last_packet_time) * DOUBLE_ECHO;
 
         for (size_t point_idx = 0, point_num = 0; point_idx < POINTS_PER_PACKET_DOUBLE_ECHO; point_idx += 12, ++point_num) {
-            if ((msg->data[point_idx] == 0xff) && (msg->data[point_idx + 1] == 0xaa) && (msg->data[point_idx + 2] == 0xbb) && 
-                (msg->data[point_idx + 3] == 0xcc) && (msg->data[point_idx + 4] == 0xdd)) {
-                point_cloud_timestamp = last_packet_time + point_interval_time * point_num;
+            if ((packet->data[point_idx] == 0xff) && (packet->data[point_idx + 1] == 0xaa) && (packet->data[point_idx + 2] == 0xbb) && 
+                (packet->data[point_idx + 3] == 0xcc) && (packet->data[point_idx + 4] == 0xdd)) {
+                point_cloud_timestamp = last_packet_time + point_interval_time * (point_num + point_time_offset);
+                point_cloud_time = use_first_point_time 
+                    ? (is_add_frame_.load() ? first_two_point_cloud_time : last_point_cloud_time)
+                    : point_cloud_timestamp;
+
+                first_two_point_cloud_time = last_point_cloud_time;
+                last_point_cloud_time = point_cloud_timestamp;
+
                 packetType = true;
                 frame_count++;
             } else {
-                double point_distance1 = ((msg->data[point_idx + 4] << 16) + (msg->data[point_idx + 5] << 8) +
-                                           msg->data[point_idx + 6]) * g_fDistanceAcc;
+                double point_distance1 = ((packet->data[point_idx + 4] << 16) + (packet->data[point_idx + 5] << 8) +
+                                           packet->data[point_idx + 6]) * g_fDistanceAcc;
                 if (point_distance1 < min_range || point_distance1 > max_range) continue;
-                double point_distance2 = ((msg->data[point_idx + 8] << 16) + (msg->data[point_idx + 9] << 8) +
-                                           msg->data[point_idx + 10]) * g_fDistanceAcc;
+                double point_distance2 = ((packet->data[point_idx + 8] << 16) + (packet->data[point_idx + 9] << 8) +
+                                           packet->data[point_idx + 10]) * g_fDistanceAcc;
                 memset(&lidardata, 0, sizeof(lidardata));
                 //水平角度
-                int fAngle_H = msg->data[point_idx + 1] + (msg->data[point_idx] << 8);
+                int fAngle_H = (packet->data[point_idx] << 8) + packet->data[point_idx + 1];
                 if (fAngle_H > 32767) {
                     fAngle_H = (fAngle_H - 65536);
                 }
                 if ((fAngle_H < scan_start_angle) || (fAngle_H > scan_end_angle)) continue;
                 //垂直角度+通道号
-                int iTempAngle = msg->data[point_idx + 2];
-                int iChannelNumber = iTempAngle >> 6; //左移六位 通道号
-                int iSymmbol = (iTempAngle >> 5) & 0x01; //左移五位 符号位
+                int iTempAngle = packet->data[point_idx + 2];
+                int iChannelNumber = iTempAngle >> channel_number_shift; //左移六位 通道号
+                int iSymmbol = (iTempAngle >> symbol_shift) & 0x01; //左移五位 符号位
                 double fAngle_V = 0.0;
                 if (1 == iSymmbol) // 符号位 0：正数 1：负数
                 {
-                    int iAngle_V = msg->data[point_idx + 3] + (msg->data[point_idx + 2] << 8);
+                    int iAngle_V = (packet->data[point_idx + 2] << 8) + packet->data[point_idx + 3];
 
-                    fAngle_V = iAngle_V | 0xc000;
+                    fAngle_V = iAngle_V | angle_v_mask;
                     if (fAngle_V > 32767) {
                         fAngle_V = (fAngle_V - 65536);
                     }
                 } else {
-                    int iAngle_Hight = iTempAngle & 0x3f;
-                    fAngle_V = msg->data[point_idx + 3] + (iAngle_Hight << 8);
+                    int iAngle_Hight = iTempAngle & angle_h_mask;
+                    fAngle_V = (iAngle_Hight << 8) + packet->data[point_idx + 3];
                 }
 
                 lidardata.azimuth = fAngle_H * 0.01;
                 lidardata.vertical_angle = fAngle_V * g_fAngleAcc_V;
                 lidardata.channel_number = iChannelNumber;
                 lidardata.distance = point_distance1;
-                lidardata.intensity = msg->data[point_idx + 7];
-                lidardata.time = last_packet_time + point_interval_time * (point_num + 1) - point_cloud_timestamp;
+                lidardata.intensity = packet->data[point_idx + 7];
+                lidardata.time = last_packet_time + point_interval_time * (point_num + 1) - point_cloud_timestamp * relative_time_offset;
                 lidarConvertCoordinate(lidardata);  // 第一个点
 
                 lidardata.distance = point_distance2;
                 if (lidardata.distance < min_range || lidardata.distance > max_range) continue;
-                lidardata.intensity = msg->data[point_idx + 11];
+                lidardata.intensity = packet->data[point_idx + 11];
                 lidarConvertCoordinate(lidardata);  // 第二个点
             }
 
-            if (packetType) {
-                if (is_add_frame_) {
-                    if (frame_count >= 2) {
-                        {
-                            std::unique_lock<std::mutex> lock(pc_mutex_);
-                            point_cloud_xyzirt_pub_ = std::move(point_cloud_xyzirt_);
-                        }
-                        thread_pool_->enqueue([this]() { publishPointCloudNew(); });
-                    }
-                    packetType = false;
-                    point_cloud_xyzirt_ = std::move(point_cloud_xyzirt_bak_);
-                    point_cloud_xyzirt_bak_.reset(new pcl::PointCloud<VPoint>());
-                } else {
+            prepareAndPublishPointCloud(packetType);
+        }
+
+        last_packet_time = current_packet_time;
+    }
+
+    void LslidarLsDriver::prepareAndPublishPointCloud(bool& packetType) {
+        if (packetType) {
+            if (is_add_frame_.load()) {
+                if (frame_count >= 2) {
                     {
                         std::unique_lock<std::mutex> lock(pc_mutex_);
                         point_cloud_xyzirt_pub_ = std::move(point_cloud_xyzirt_);
                     }
                     thread_pool_->enqueue([this]() { publishPointCloudNew(); });
-                    packetType = false;
-                    point_cloud_xyzirt_.reset(new pcl::PointCloud<VPoint>());
-                    point_cloud_xyzirt_bak_.reset(new pcl::PointCloud<VPoint>());
                 }
+                packetType = false;
+                point_cloud_xyzirt_ = std::move(point_cloud_xyzirt_bak_);
+                point_cloud_xyzirt_bak_.reset(new pcl::PointCloud<VPoint>);
+            } else {
+                {
+                    std::unique_lock<std::mutex> lock(pc_mutex_);
+                    point_cloud_xyzirt_pub_ = std::move(point_cloud_xyzirt_);
+                }
+                thread_pool_->enqueue([this]() { publishPointCloudNew(); });
+                packetType = false;
+                point_cloud_xyzirt_.reset(new pcl::PointCloud<VPoint>);
+                point_cloud_xyzirt_bak_.reset(new pcl::PointCloud<VPoint>);
             }
         }
-
-        last_packet_time = current_packet_time;
     }
 
     void LslidarLsDriver::checkPacketLoss(const lslidar_msgs::msg::LslidarPacket::UniquePtr &msg, int data_offset, int byte_count) {
@@ -616,19 +703,20 @@ namespace lslidar_driver {
 
             auto loss_data = std::make_shared<std_msgs::msg::Int64>();
             loss_data->data = total_packet_loss_;
-            packet_loss_pub->publish(*loss_data);
+            packet_loss_pub_->publish(*loss_data);
         }
+        
         last_packet_number_ = tmp_packet_number_;
     }
 
     bool LslidarLsDriver::getLidarInformation(){
         lslidar_msgs::msg::LslidarPacket::UniquePtr msg(new lslidar_msgs::msg::LslidarPacket());
     
-        while (true) {
+        while (rclcpp::ok()) {
             // keep reading until full packet received
             int rc_ = msop_input_->getPacket(msg);
-
-            if (rc_ == 0) break;       // got a full packet?
+            if (rc_ == 1206) break;       // got a full packet?
+            if (rc_ == 0) continue;
             if (rc_ < 0) return false; // end of file reached?
         }
         
@@ -643,7 +731,8 @@ namespace lslidar_driver {
             g_fAngleAcc_V = 0.01;
             g_fDistanceAcc = 0.004;
             get_ms06_param = false;
-            LS_INFO << "Lidar type MS06" << LS_END;
+            
+            LS_INFO << "Lidar model MS06" << LS_END;
         }
 
         if(msg->data[1205] == 0x01 || msg->data[1205] == 0x11) {
@@ -655,6 +744,7 @@ namespace lslidar_driver {
                 lidarConvertCoordinate = std::bind(&LslidarLsDriver::convertCoordinate, this, std::placeholders::_1);
                 LS_INFO << "Lidar distortion correction on" << LS_END;
             }
+
             LS_INFO << "Lidar echo mode: single echo" << LS_END;
         } else if(msg->data[1205] == 0x02 || msg->data[1205] == 0x12){
             lslidarPacketProcess = std::bind(&LslidarLsDriver::packetProcessDouble, this, std::placeholders::_1);
@@ -665,10 +755,13 @@ namespace lslidar_driver {
                 lidarConvertCoordinate = std::bind(&LslidarLsDriver::convertCoordinate, this, std::placeholders::_1);
                 LS_INFO << "Lidar distortion correction on" << LS_END;
             }
+
             LS_INFO << "Lidar echo mode: double echo" << LS_END;
         } else {
             return false;
         }
+
+        LS_INFO << "Lidar model:" << lidar_model.c_str() << LS_END;
 
         return true;
     };

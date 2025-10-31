@@ -30,12 +30,14 @@
 #include <regex>
 #include <cstdio>
 #include <string>
+#include <mutex>
 #include <yaml-cpp/yaml.h>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/int64.hpp>
 #include <std_msgs/msg/int8.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
+
 #include "lslidar_log.hpp"
 #include "lslidar_msgs/msg/lslidar_packet.hpp"
 #include "lslidar_msgs/srv/angle_distortion_correction.hpp"

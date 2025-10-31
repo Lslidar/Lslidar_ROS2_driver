@@ -1,30 +1,30 @@
-cx_left:  
+x10:  
   lslidar_driver_node:
     ros__parameters:
-      lidar_type: "CX"            # 雷达类型
+      lidar_type: "X10"           # 雷达类型
+      lidar_model: "M10"          # 雷达型号 M10 M10GPS M10P N10 N10Plus N301
+      serial_port: ""             # 雷达连接串口名称 使用网口请将值改为空
       device_ip: "192.168.1.200"  # 雷达IP地址
       msop_port: 2368             # 雷达目的数据端口
       difop_port: 2369            # 雷达目的设备端口
-      packet_rate: 1695.0         # PCAP文件回放速率，离线解析PCAP数据时使用
-      add_multicast: false        # 雷达是否开启组播
-      group_ip: "224.1.1.2"       # 组播IP地址
+      packet_rate: 188.0          # PCAP文件回放速率，离线解析PCAP数据时使用
       #pcap: "/home/ls/Desktop/lidar_data.pcap"          # PCAP文件路径，离线解析PCAP数据时打开注释
       
       # 点云处理参数
-      pcl_type: false             # 点云类型  true: xyzi
       frame_id: "laser_link"      # 坐标系名称
       pointcloud_topic: "lslidar_point_cloud"  # 点云话题名
-      use_time_service: false     # 雷达是否使用授时(GPS PTP NTP)
-      use_first_point_time: false # true: 使用每帧第一个点的时间做为点云时间
-      use_absolute_time: false    # 点时间格式 true: 使用绝对时间  注意与点云头文件中USE_ABSOLUTE_TIME保持一致
+      laserscan_topic: "scan"     # 发布 LaserScan 数据话题名称
+      use_time_service: false     # 否使用授时(GPS PTP NTP)
+      use_first_point_time: false # 是否使用每帧第一个点的时间做为点云时间
+      publish_scan: true          # LaserScan输出控制
+      use_high_precision: false   # 是否使用高精度模式(laserscan) N10建议开启
+      publish_multiecholaserscan: false  # N10Plus 是否发布 MultiEchoLaserScan 数据
+      enable_noise_filter: false  # 是否开启孤立噪点滤波 N10Plus不生效
+      N10Plus_hz: 10              # N10Plus雷达扫描频率 [6,12]
       min_range: 0.15             # 雷达扫描最小距离 小于该值的点将被过滤(m)
-      max_range: 200.0            # 雷达扫描最大距离 大于该值的点将被过滤(m)
+      max_range: 50.0             # 雷达扫描最大距离 大于该值的点将被过滤(m)
       angle_disable_min: 0        # 雷达扫描最小裁剪角度 填整数 单位: 0.01°
       angle_disable_max: 0        # 雷达扫描最大裁剪角度 填整数 单位: 0.01°
-      horizontal_angle_resolution: 0.18  # Laserscan 水平角分辨率  5Hz:0.09 20Hz:0.36 
-      publish_scan: false         # LaserScan输出控制
-      scan_num: 8                 # LaserScan线号
-      filter_angle_file: "config/filter_angle.yaml"  # 角度滤波文件路径
 
       # 点云坐标系转换参数
       is_pretreatment: false      # 预处理开关 仅对点云生效
@@ -74,4 +74,4 @@ cx_left:
           0.0,
           1.0,
         ]
-        
+
