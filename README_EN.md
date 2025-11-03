@@ -696,7 +696,7 @@ Date    : 2025-05-07
 Update version : LSLIDAR_ROS2_V5.1.1_250527
 
 Modify: 
-1. Add matrix parameters for preprocessing
+1. Add matrix parameters for preprocessing.
 
 Date    : 2025-05-27
 
