@@ -2,7 +2,7 @@ ch:
   lslidar_driver_node:
     ros__parameters:
       lidar_type: "CH"            # 雷达类型
-      lidar_model: "CX126S3" 	    # 雷达型号 CX1S3 CX6S3 CH16X1 CH32A CH1W CH64W CB64S1_A CX126S3 CH128X1 CH128S1 CX128S2 CH256
+      lidar_model: "CX1S3" 	    # 雷达型号 CX1S3 CX6S3 CH16X1 CH32A CH1W CH64W CB64S1_A CX126S3 CH128X1 CH128S1 CX128S2 CH256
       device_ip: "192.168.1.200"  # 雷达IP地址
       msop_port: 2368             # 雷达目的数据端口
       difop_port: 2369            # 雷达目的设备端口

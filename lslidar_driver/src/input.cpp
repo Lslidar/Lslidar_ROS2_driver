@@ -75,6 +75,13 @@ namespace lslidar_driver {
             return;
         }
 
+        // 设置接收缓冲区大小
+        int recv_buf_size = 2 * 1024 * 1024; 
+        if (setsockopt(sockfd_, SOL_SOCKET, SO_RCVBUF, &recv_buf_size, sizeof(recv_buf_size))) {
+            perror("setsockopt SO_RCVBUF error!\n");
+            // return;
+        }
+
         sockaddr_in my_addr;                   
         memset(&my_addr, 0, sizeof(my_addr));  
         my_addr.sin_family = AF_INET;          

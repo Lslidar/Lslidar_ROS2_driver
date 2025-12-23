@@ -27,7 +27,7 @@ def generate_launch_description():
             package='rviz2',
             node_executable='rviz2',
             node_name='rviz2',
-            node_namespace='cx',
+            node_namespace='x10',
             arguments=['-d', rviz_config],
             output='screen')
     else:

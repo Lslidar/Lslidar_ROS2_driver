@@ -377,6 +377,8 @@ namespace lslidar_driver {
 
     void LslidarCxDriver::publishScan() {
         std::unique_lock<std::mutex> lock(pointcloud_lock);
+        if (!scan_msg_bak || scan_msg_bak->ranges.empty()) return;
+        
         scan_msg_bak->header.frame_id = frame_id;
         scan_msg_bak->header.stamp = rclcpp::Time(point_cloud_time * 1000000000LL);
         laserscan_pub_->publish(std::move(scan_msg_bak));

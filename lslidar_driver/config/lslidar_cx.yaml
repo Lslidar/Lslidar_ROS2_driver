@@ -8,7 +8,7 @@ cx:
       packet_rate: 1695.0         # PCAP文件回放速率，离线解析PCAP数据时使用
       add_multicast: false        # 雷达是否开启组播
       group_ip: "224.1.1.2"       # 组播IP地址
-      #pcap: "/home/ls/Desktop/lidar_data.pcap"          # PCAP文件路径，离线解析PCAP数据时打开注释
+      #pcap: "/home/ls/Desktop/capture.pcap"          # PCAP文件路径，离线解析PCAP数据时打开注释
       
       # 点云处理参数
       pcl_type: false             # 点云类型  true: xyzi
@@ -23,7 +23,7 @@ cx:
       angle_disable_max: 0        # 雷达扫描最大裁剪角度 填整数 单位: 0.01°
       horizontal_angle_resolution: 0.18  # Laserscan 水平角分辨率  5Hz:0.09 20Hz:0.36 
       publish_scan: false         # LaserScan输出控制
-      scan_num: 0                 # LaserScan线号
+      scan_num: 8                 # LaserScan线号
       filter_angle_file: "config/filter_angle.yaml"  # 角度滤波文件路径
 
       # 点云坐标系转换参数

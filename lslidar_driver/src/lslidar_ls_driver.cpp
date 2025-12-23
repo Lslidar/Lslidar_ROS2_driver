@@ -546,6 +546,8 @@ namespace lslidar_driver {
 
                 packetType = true;
                 frame_count++;
+                prepareAndPublishPointCloud(packetType);
+                
             } else {    // 预计算点的距离
                 double point_distance = ((packet->data[point_idx + 4] << 16) + (packet->data[point_idx + 5] << 8) +
                                           packet->data[point_idx + 6]) * g_fDistanceAcc;
@@ -583,8 +585,6 @@ namespace lslidar_driver {
                 lidardata.time = last_packet_time + point_interval_time * (point_num + 1) - point_cloud_timestamp  * relative_time_offset;
                 lidarConvertCoordinate(lidardata);  // 计算坐标
             }
-
-            prepareAndPublishPointCloud(packetType);
         }
 
         last_packet_time = current_packet_time;
@@ -609,6 +609,7 @@ namespace lslidar_driver {
 
                 packetType = true;
                 frame_count++;
+                prepareAndPublishPointCloud(packetType);
             } else {
                 double point_distance1 = ((packet->data[point_idx + 4] << 16) + (packet->data[point_idx + 5] << 8) +
                                            packet->data[point_idx + 6]) * g_fDistanceAcc;
@@ -653,8 +654,6 @@ namespace lslidar_driver {
                 lidardata.intensity = packet->data[point_idx + 11];
                 lidarConvertCoordinate(lidardata);  // 第二个点
             }
-
-            prepareAndPublishPointCloud(packetType);
         }
 
         last_packet_time = current_packet_time;

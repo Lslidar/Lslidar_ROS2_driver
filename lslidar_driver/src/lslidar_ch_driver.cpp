@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *****************************************************************************/
+#define LASER_SCAN_SELECE_RANGE true
 
 #include <lslidar_driver/lslidar_ch_driver.hpp>
 
@@ -382,8 +383,14 @@ namespace lslidar_driver {
         point_cloud_xyzirt_->height = 1;
 
         if (publish_laserscan) {
+
+#if LASER_SCAN_SELECE_RANGE
+            scan_msg->angle_min = scan_start_angle * 0.01 * DEG_TO_RAD;
+            scan_msg->angle_max = scan_end_angle * 0.01 * DEG_TO_RAD;
+#else
             scan_msg->angle_min = -M_PI;
             scan_msg->angle_max = M_PI;
+#endif // 0
             scan_msg->range_min = min_range;
             scan_msg->range_max = max_range;
             scan_msg->angle_increment = horizontal_angle_resolution * DEG_TO_RAD;
@@ -398,6 +405,8 @@ namespace lslidar_driver {
 
     void LslidarChDriver::publishLaserScan() {
         if (!is_get_difop_.load()) { return; }
+        if (!scan_msg_bak || scan_msg_bak->ranges.empty()) return;
+        
         scan_msg_bak->header.frame_id = frame_id;
         scan_msg_bak->header.stamp = rclcpp::Time(point_cloud_time * 1000000000LL);
         laserscan_pub_->publish(std::move(scan_msg_bak));
@@ -809,8 +818,14 @@ namespace lslidar_driver {
 
                 if (publish_laserscan) {
                     scan_msg = std::make_unique<sensor_msgs::msg::LaserScan>();
+
+#if  LASER_SCAN_SELECE_RANGE
+                    scan_msg->angle_min = scan_start_angle * 0.01 * DEG_TO_RAD;
+                    scan_msg->angle_max = scan_end_angle * 0.01 * DEG_TO_RAD;
+#else
                     scan_msg->angle_min = -M_PI;
                     scan_msg->angle_max = M_PI;
+#endif // 0
                     scan_msg->range_min = min_range;
                     scan_msg->range_max = max_range;
                     scan_msg->angle_increment = horizontal_angle_resolution * DEG_TO_RAD;
@@ -903,8 +918,13 @@ namespace lslidar_driver {
 
                 if (publish_laserscan) {
                     scan_msg = std::make_unique<sensor_msgs::msg::LaserScan>();
+#if LASER_SCAN_SELECE_RANGE
+                    scan_msg->angle_min = scan_start_angle * 0.01 * DEG_TO_RAD;
+                    scan_msg->angle_max = scan_end_angle * 0.01 * DEG_TO_RAD;
+#else
                     scan_msg->angle_min = -M_PI;
                     scan_msg->angle_max = M_PI;
+#endif // 0
                     scan_msg->range_min = min_range;
                     scan_msg->range_max = max_range;
                     scan_msg->angle_increment = horizontal_angle_resolution * DEG_TO_RAD;
@@ -975,7 +995,8 @@ namespace lslidar_driver {
 
         // laserscan
         if (publish_laserscan) {
-            if (channel_num == lidardata.vertical_line) {
+           // if (channel_num == lidardata.vertical_line) 
+            {
                 updateLaserscan(x, y, lidardata.intensity);
             }
         }
