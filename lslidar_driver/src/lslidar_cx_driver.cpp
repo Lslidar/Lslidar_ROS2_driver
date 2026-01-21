@@ -702,6 +702,8 @@ namespace lslidar_driver {
                 point.z = z_coord;
                 point.intensity = firings.intensity[fir_idx];
                 point.ring = remapped_scan_idx;
+                setPointRGB(&point);
+
                 point_cloud_xyzirt_->points.push_back(point);
                 ++point_cloud_xyzirt_->width;
             }
@@ -838,6 +840,8 @@ namespace lslidar_driver {
                     point.z = z_coord;
                     point.intensity = firings.intensity[fir_idx];
                     point.ring = remapped_scan_idx;
+                    setPointRGB(&point);
+
                     point_cloud_xyzirt_->points.push_back(point);
                     ++point_cloud_xyzirt_->width;
                 }

@@ -42,6 +42,7 @@ namespace lslidar_driver {
 
     struct PointXYZIRT {
         PCL_ADD_POINT4D;      // x, y, z 和 data[4]
+        PCL_ADD_RGB;          // 添加 RGB 颜色信息
         PCL_ADD_INTENSITY;    // 强度
         std::uint16_t ring;   // 线号
         POINT_TIME_TYPE time; // 时间
@@ -55,6 +56,7 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(lslidar_driver::PointXYZIRT,
     (float, x, x)
     (float, y, y)
     (float, z, z)
+    (float, rgb, rgb)
     (float, intensity, intensity)
     (std::uint16_t, ring, ring)
     (POINT_TIME_TYPE, time, time)

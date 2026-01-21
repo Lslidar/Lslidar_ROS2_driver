@@ -266,20 +266,25 @@ namespace lslidar_driver {
         double mirror_angle_s3[4] = {1.5, -0.5, 0.5, -1.5};   //摆镜角度   //根据通道不同偏移角度不同
         double mirror_angle_s4[8] = {-2.555, -1.825, -1.095, -0.365, 0.365, 1.095, 1.825, 2.555};
 
-        if (lidar_model == "LSS3") {
+        if (lidar_model == "LSS3" || lidar_model == "MS06") {
             channel_number_shift = CHANNEL_SHIFT_S3;
             symbol_shift = SYMBOL_SHIFT_S3;
             angle_v_mask = ANGLE_V_MASK_S3;
             angle_h_mask = ANGLE_H_MASK_S3;
 
-            m_offset = m_offset_s3;
             cos1 = cos30;
             sin1 = sin30;
             sin2 = sin60;
-            for (int i = 0; i < 4; ++i) {
-                cos_mirror_angle[i] = cos(DEG2RAD(mirror_angle_s3[i]));
-                sin_mirror_angle[i] = sin(DEG2RAD(mirror_angle_s3[i]));
+
+            if (lidar_model == "LSS3" )
+            {
+                m_offset = m_offset_s3;
+                for (int i = 0; i < 4; ++i) {
+                    cos_mirror_angle[i] = cos(DEG2RAD(mirror_angle_s3[i]));
+                    sin_mirror_angle[i] = sin(DEG2RAD(mirror_angle_s3[i]));
+                }
             }
+
         } else if (lidar_model == "LSS4") {
             channel_number_shift = CHANNEL_SHIFT_S4;
             symbol_shift = SYMBOL_SHIFT_S4;
@@ -415,6 +420,8 @@ namespace lslidar_driver {
         point.intensity = lidardata.intensity;
         point.ring = lidardata.channel_number;
         point.time = lidardata.time;
+        setPointRGB(&point);
+
         point_cloud_xyzirt_->points.push_back(point);
         ++point_cloud_xyzirt_->width;
 
@@ -466,6 +473,8 @@ namespace lslidar_driver {
         point.intensity = lidardata.intensity;
         point.ring = lidardata.channel_number;
         point.time = lidardata.time;
+        setPointRGB(&point);
+
         point_cloud_xyzirt_->points.push_back(point);
         ++point_cloud_xyzirt_->width;
 
@@ -730,7 +739,7 @@ namespace lslidar_driver {
             g_fAngleAcc_V = 0.01;
             g_fDistanceAcc = 0.004;
             get_ms06_param = false;
-            
+            lidar_model == "MS06";
             LS_INFO << "Lidar model MS06" << LS_END;
         }
 

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>lslidar_driver</name>
-  <version>5.1.1</version>
+  <version>5.2.0</version>
   <description>lslidar_driver: Core driver handling device communication and data processing</description>
   <maintainer email="jianjiangxie@lslidar.com">lslidar</maintainer>
   <license>Apache-2.0</license>

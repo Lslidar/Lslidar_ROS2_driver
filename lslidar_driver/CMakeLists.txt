@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(lslidar_driver VERSION 5.1.1)
+project(lslidar_driver VERSION 5.2.0)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

@@ -990,6 +990,8 @@ namespace lslidar_driver {
         point.intensity = lidardata.intensity;
         point.ring = lidardata.vertical_line;
         point.time = lidardata.time;
+        setPointRGB(&point);
+
         point_cloud_xyzirt_->points.push_back(point);
         ++point_cloud_xyzirt_->width;
 
@@ -1022,6 +1024,8 @@ namespace lslidar_driver {
         point.intensity = lidardata.intensity;
         point.ring = lidardata.vertical_line;
         point.time = lidardata.time;
+        setPointRGB(&point);
+
         point_cloud_xyzirt_->points.push_back(point);
         ++point_cloud_xyzirt_->width;
 
@@ -1052,6 +1056,8 @@ namespace lslidar_driver {
         point.intensity = lidardata.intensity;
         point.ring = lidardata.vertical_line;
         point.time = lidardata.time;
+        setPointRGB(&point);
+
         point_cloud_xyzirt_->points.push_back(point);
         ++point_cloud_xyzirt_->width;
 
@@ -1081,6 +1087,8 @@ namespace lslidar_driver {
         point.intensity = lidardata.intensity;
         point.ring = lidardata.vertical_line;
         point.time = lidardata.time;
+        setPointRGB(&point);
+
         point_cloud_xyzirt_->points.push_back(point);
         ++point_cloud_xyzirt_->width;
 
@@ -1157,6 +1165,8 @@ namespace lslidar_driver {
         point.intensity = lidardata.intensity;
         point.ring = lidardata.vertical_line;
         point.time = lidardata.time;
+        setPointRGB(&point);
+
         point_cloud_xyzirt_->points.push_back(point);
         ++point_cloud_xyzirt_->width;
 
@@ -1195,6 +1205,8 @@ namespace lslidar_driver {
         point.intensity = lidardata.intensity;
         point.ring = lidardata.vertical_line;
         point.time = lidardata.time;
+        setPointRGB(&point);
+
         point_cloud_xyzirt_->points.push_back(point);
         ++point_cloud_xyzirt_->width;
 
@@ -1226,6 +1238,8 @@ namespace lslidar_driver {
         point.intensity = lidardata.intensity;
         point.ring = lidardata.vertical_line;
         point.time = lidardata.time;
+        setPointRGB(&point);
+
         point_cloud_xyzirt_->points.push_back(point);
         ++point_cloud_xyzirt_->width;
         
@@ -1255,6 +1269,8 @@ namespace lslidar_driver {
         point.intensity = lidardata.intensity;
         point.ring = lidardata.vertical_line;
         point.time = lidardata.time;
+        setPointRGB(&point);
+
         point_cloud_xyzirt_->points.push_back(point);
         ++point_cloud_xyzirt_->width;
 
@@ -1298,6 +1314,8 @@ namespace lslidar_driver {
         point.intensity = lidardata.intensity;
         point.ring = lidardata.vertical_line;
         point.time = lidardata.time;
+        setPointRGB(&point);
+        
         point_cloud_xyzirt_->points.push_back(point);
         ++point_cloud_xyzirt_->width;
 
@@ -1328,6 +1346,8 @@ namespace lslidar_driver {
         point.intensity = lidardata.intensity;
         point.ring = lidardata.vertical_line;
         point.time = lidardata.time;
+        setPointRGB(&point);
+        
         point_cloud_xyzirt_->points.push_back(point);
         ++point_cloud_xyzirt_->width;
 

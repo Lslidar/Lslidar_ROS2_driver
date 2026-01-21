@@ -60,6 +60,34 @@ namespace lslidar_driver {
 
         virtual bool poll() = 0;
         
+        void setPointRGB(PointXYZIRT* point)
+        {
+            int m_Intensity = point->intensity;
+            if (m_Intensity < 16)
+            {
+                point->r = 0;
+                point->g = 128 + m_Intensity * 8;
+                point->b = 255;
+            }
+            else if (m_Intensity < 70 && m_Intensity >= 16)
+            {
+                point->r = 0;
+                point->g = 255;
+                point->b = 255 - (m_Intensity - 16) * 4;
+            }
+            else if (m_Intensity < 128 && m_Intensity >= 70)
+            {
+                point->r = 4 * (m_Intensity - 70);
+                point->g = 255;
+                point->b = 0;
+            }
+            else {
+                point->r = 255;
+                point->g = 255 - (m_Intensity - 128) * 2;
+                point->b = 0;
+            }
+        }
+    
     protected:
         rclcpp::Node::SharedPtr node_;
         
